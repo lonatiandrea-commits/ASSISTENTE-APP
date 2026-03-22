@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0a0e14"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Assistente"/>
+<title>Assistente Personale</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e14;--bg2:#111620;--bg3:#171d2a;--bg4:#1e2535;
+  --border:#252e40;--text:#e8eef6;--muted:#6a7a90;
+  --gold:#d4a843;--gold2:#9a7420;--gold-glow:rgba(212,168,67,0.2);
+  --blue:#1e5aaa;--blue2:#0e2d5a;--blue-glow:rgba(30,90,170,0.28);
+  --green:#1a5c38;--red:#8a1a1a;
+  --user-b:#152a42;--ai-b:#131a26;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+html,body{height:100%;height:100dvh;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto;position:relative;overflow:hidden}
+#app::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 85%,rgba(212,168,67,0.05) 0%,transparent 55%),radial-gradient(ellipse at 85% 15%,rgba(30,90,170,0.07) 0%,transparent 55%);pointer-events:none;z-index:0}
+
+/* SETUP */
+#setup{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:200;padding:28px}
+.setup-card{text-align:center;max-width:360px;width:100%;animation:fadeUp 0.5s ease}
+.setup-logo{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:42px;font-style:italic;color:#0a0500;margin:0 auto 28px;box-shadow:0 0 48px var(--gold-glow)}
+.setup-title{font-family:var(--serif);font-size:30px;font-style:italic;margin-bottom:6px}
+.setup-sub{font-size:12px;color:var(--muted);margin-bottom:44px;letter-spacing:0.08em}
+.setup-label{font-size:15px;color:var(--text);margin-bottom:14px}
+.setup-input{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:16px;padding:16px 20px;font-size:17px;font-family:var(--sans);outline:none;margin-bottom:18px;text-align:center;transition:border-color 0.2s}
+.setup-input:focus{border-color:var(--gold)}
+.setup-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:16px;color:#0a0500;font-weight:600;font-size:17px;font-family:var(--sans);cursor:pointer;transition:opacity 0.2s,transform 0.1s}
+.setup-btn:active{transform:scale(0.98)}.setup-btn:disabled{opacity:0.3;cursor:not-allowed}
+.setup-note{font-size:11px;color:var(--muted);margin-top:16px}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;z-index:20;box-shadow:0 2px 20px rgba(0,0,0,0.5)}
+.h-left{display:flex;align-items:center;gap:14px}
+.hamburger{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all 0.25s}
+.h-logo{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:20px;font-style:italic;color:#0a0500;flex-shrink:0;box-shadow:0 0 14px var(--gold-glow)}
+.h-title{font-family:var(--serif);font-size:19px;font-style:italic}
+.h-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.h-right{display:flex;gap:4px}
+.icon-btn{background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;padding:7px 9px;border-radius:10px;transition:background 0.15s}
+.icon-btn:active{background:var(--bg4)}
+
+/* SIDE MENU */
+#menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;opacity:0;pointer-events:none;transition:opacity 0.25s}
+#menu-overlay.open{opacity:1;pointer-events:all}
+#side-menu{position:fixed;top:0;left:0;bottom:0;width:78%;max-width:300px;background:var(--bg2);border-right:1px solid var(--border);z-index:101;transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;overflow-y:auto}
+#side-menu.open{transform:translateX(0)}
+.menu-header{padding:24px 20px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px}
+.menu-logo{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-style:italic;color:#0a0500;box-shadow:0 0 16px var(--gold-glow)}
+.menu-name{font-family:var(--serif);font-size:18px;font-style:italic}
+.menu-role{font-size:11px;color:var(--muted)}
+.menu-section-label{padding:18px 20px 8px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em}
+.menu-item{display:flex;align-items:center;gap:16px;padding:14px 20px;background:none;border:none;color:var(--text);cursor:pointer;width:100%;font-size:15px;font-family:var(--sans);transition:background 0.15s;text-align:left}
+.menu-item:active{background:var(--bg4)}
+.menu-item-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+.mi-gold{background:rgba(212,168,67,0.12)}.mi-blue{background:rgba(30,90,170,0.15)}.mi-teal{background:rgba(26,130,100,0.12)}.mi-slate{background:rgba(80,100,140,0.12)}
+.menu-item-label{font-weight:500}.menu-item-desc{font-size:12px;color:var(--muted);margin-top:1px}
+.menu-divider{height:1px;background:var(--border);margin:6px 20px}
+.menu-bottom{margin-top:auto;padding:16px 20px 32px;border-top:1px solid var(--border);display:flex;gap:8px}
+.menu-bottom-btn{flex:1;padding:10px;background:var(--bg4);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.menu-bottom-btn:active{background:var(--bg3)}
+
+/* CHAT */
+#chat{flex:1;overflow-y:auto;padding:16px 12px 10px;display:flex;flex-direction:column;gap:13px;position:relative;z-index:1}
+#chat::-webkit-scrollbar{width:3px}
+#chat::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.msg-row{display:flex;align-items:flex-end;gap:8px;animation:fadeUp 0.22s ease}
+.msg-row.user{justify-content:flex-end}
+.avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:13px;font-style:italic;color:#0a0500}
+.bubble{max-width:80%;padding:11px 14px;font-size:14.5px;line-height:1.65;font-family:var(--sans)}
+.bubble.user{background:var(--user-b);border-radius:18px 18px 4px 18px;color:var(--text)}
+.bubble.ai{background:var(--ai-b);border-radius:18px 18px 18px 4px;border:1px solid var(--border);color:var(--text)}
+.btime{font-size:10px;color:var(--muted);margin-top:5px;text-align:right}
+.b-action{font-weight:600;color:var(--gold);margin-bottom:5px;font-size:13.5px}
+.b-subj{background:rgba(212,168,67,0.08);border-left:2px solid var(--gold);padding:4px 8px;border-radius:0 6px 6px 0;font-size:13px;color:var(--gold);margin-bottom:6px}
+.b-learned{font-size:11px;color:#4a8a5a;font-style:italic;margin-top:6px}
+.b-hr{border:none;border-top:1px solid var(--border);margin:6px 0}
+.typing-row{display:flex;align-items:flex-end;gap:8px;animation:fadeUp 0.2s ease}
+.typing-dots{display:flex;gap:5px;padding:13px 16px;background:var(--ai-b);border-radius:18px 18px 18px 4px;border:1px solid var(--border)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:bounce 1s infinite}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
+.event-card{background:var(--bg2);border:1px solid rgba(212,168,67,0.35);border-radius:14px;padding:14px 16px;animation:fadeUp 0.2s ease}
+.event-title{font-weight:600;color:var(--gold);margin-bottom:10px;font-size:14px}
+.event-btns{display:flex;gap:8px}
+.btn-si{flex:1;padding:10px;background:var(--green);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-family:var(--sans);font-weight:500}
+.btn-no{padding:10px 18px;background:var(--bg4);color:var(--muted);border:none;border-radius:10px;cursor:pointer;font-size:14px;font-family:var(--sans)}
+
+/* TEXT BAR */
+#text-bar{display:none;gap:8px;padding:10px 14px 8px;background:var(--bg2);border-top:1px solid var(--border);position:relative;z-index:10}
+#input-ta{flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:11px 14px;font-size:15px;font-family:var(--sans);line-height:1.4;resize:none;outline:none;max-height:90px;overflow-y:auto;transition:border-color 0.2s}
+#input-ta:focus{border-color:var(--gold)}
+#input-ta::placeholder{color:var(--muted)}
+.send-btn{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;font-size:17px;cursor:pointer;flex-shrink:0;color:#0a0500;font-weight:bold;transition:opacity 0.2s,transform 0.1s}
+.send-btn:active{transform:scale(0.94)}.send-btn:disabled{opacity:0.3;cursor:not-allowed}
+
+/* 2 BIG BUTTONS */
+#big-btns{display:flex;gap:20px;justify-content:center;align-items:center;padding:16px 28px 32px;background:var(--bg2);border-top:1px solid var(--border);position:relative;z-index:10}
+.big-btn-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;max-width:145px}
+.big-btn{width:100%;aspect-ratio:1;max-width:118px;max-height:118px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.12s,box-shadow 0.2s;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.big-btn:active{transform:scale(0.92)}
+.big-btn.gold-btn{background:linear-gradient(145deg,#e0b84e,var(--gold2));box-shadow:0 8px 32px var(--gold-glow),0 2px 10px rgba(0,0,0,0.5)}
+.big-btn.gold-btn:active{box-shadow:0 2px 14px var(--gold-glow)}
+.big-btn.blue-btn{background:linear-gradient(145deg,#2468c0,var(--blue2));box-shadow:0 8px 32px var(--blue-glow),0 2px 10px rgba(0,0,0,0.5)}
+.big-btn.blue-btn:active{box-shadow:0 2px 14px var(--blue-glow)}
+.big-btn.listening{animation:pulse-ring 1.1s ease-in-out infinite}
+.big-btn-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none}
+.big-btn-icon{font-size:36px;line-height:1}
+.big-btn-text{font-family:var(--serif);font-size:11px;font-style:italic;color:rgba(10,5,0,0.7);letter-spacing:0.04em;font-weight:600}
+.big-btn-label{font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+
+/* MEMORIA */
+#memoria-view{flex:1;overflow-y:auto;padding:16px;display:none;flex-direction:column;gap:14px;position:relative;z-index:1}
+#memoria-view.active{display:flex}
+.mem-back{background:none;border:none;color:var(--gold);font-size:14px;cursor:pointer;text-align:left;padding:0;font-family:var(--sans)}
+.mem-title{font-family:var(--serif);font-size:22px;font-style:italic}
+.mem-desc{font-size:13px;color:var(--muted)}
+.mem-section{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.mem-label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.mem-val{font-size:15px}
+.mem-input{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:15px;font-family:var(--sans);outline:none;box-sizing:border-box}
+.mem-input:focus{border-color:var(--gold)}
+.mem-tag{display:inline-block;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:13px;margin:2px 4px 2px 0;color:var(--text)}
+.mem-empty{font-size:13px;color:var(--muted);font-style:italic}
+.save-btn{padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:14px;color:#0a0500;font-weight:600;font-size:15px;font-family:var(--sans);cursor:pointer}
+
+/* PROMEMORIA MODAL */
+#prom-modal{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:150;display:none;align-items:flex-end;justify-content:center}
+#prom-modal.open{display:flex}
+.prom-sheet{background:var(--bg2);border-radius:22px 22px 0 0;border:1px solid var(--border);padding:24px 20px 40px;width:100%;max-width:560px;animation:slideUp 0.3s cubic-bezier(0.4,0,0.2,1)}
+.prom-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.prom-title{font-family:var(--serif);font-size:22px;font-style:italic;margin-bottom:18px;text-align:center}
+.prom-input{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:14px 16px;font-size:16px;font-family:var(--sans);outline:none;margin-bottom:14px;transition:border-color 0.2s}
+.prom-input:focus{border-color:var(--blue)}
+.prom-mic-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--blue),var(--blue2));border:none;border-radius:14px;color:#fff;font-size:17px;font-family:var(--sans);font-weight:600;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px}
+.prom-send-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:14px;color:#0a0500;font-size:16px;font-family:var(--sans);font-weight:600;cursor:pointer;margin-bottom:10px}
+.prom-send-btn:disabled{opacity:0.3}
+.prom-cancel{width:100%;padding:13px;background:var(--bg4);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:15px;font-family:var(--sans);cursor:pointer}
+
+/* TOAST */
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);color:#fff;padding:11px 22px;border-radius:12px;font-size:14px;z-index:300;font-family:var(--sans);box-shadow:0 4px 24px rgba(0,0,0,0.5);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.25s}
+#toast.show{opacity:1}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(212,168,67,0.55),0 8px 32px var(--gold-glow)}70%{box-shadow:0 0 0 20px rgba(212,168,67,0),0 8px 32px var(--gold-glow)}100%{box-shadow:0 0 0 0 rgba(212,168,67,0),0 8px 32px var(--gold-glow)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SETUP -->
+<div id="setup">
+  <div class="setup-card">
+    <div class="setup-logo">A</div>
+    <h1 class="setup-title">Assistente Personale</h1>
+    <p class="setup-sub">EDILIZIA · EMAIL · CALENDARIO · DOCUMENTI</p>
+    <p class="setup-label">Come ti chiami?</p>
+    <input class="setup-input" id="setup-nome" placeholder="Il tuo nome" autocomplete="off"/>
+    <button class="setup-btn" id="setup-btn" disabled>Inizia →</button>
+    <p class="setup-note">I tuoi dati rimangono sul tuo dispositivo</p>
+  </div>
+</div>
+
+<!-- MENU OVERLAY + SIDE MENU -->
+<div id="menu-overlay"></div>
+<nav id="side-menu">
+  <div class="menu-header">
+    <div class="menu-logo">A</div>
+    <div><div class="menu-name" id="menu-name">Assistente</div><div class="menu-role">Edilizia · Costruzioni</div></div>
+  </div>
+  <div class="menu-section-label">Azioni rapide</div>
+  <button class="menu-item" data-prompt="Devo scrivere un'email a ">
+    <div class="menu-item-icon mi-gold">📧</div>
+    <div><div class="menu-item-label">Email</div><div class="menu-item-desc">Scrivi nel tuo stile</div></div>
+  </button>
+  <button class="menu-item" data-prompt="Aggiungi appuntamento: ">
+    <div class="menu-item-icon mi-blue">📅</div>
+    <div><div class="menu-item-label">Appuntamento</div><div class="menu-item-desc">Salva su calendario</div></div>
+  </button>
+  <button class="menu-item" data-prompt="Crea un preventivo per ">
+    <div class="menu-item-icon mi-gold">📋</div>
+    <div><div class="menu-item-label">Preventivo</div><div class="menu-item-desc">Genera offerta</div></div>
+  </button>
+  <button class="menu-item" data-prompt="Crea un documento: ">
+    <div class="menu-item-icon mi-teal">✒️</div>
+    <div><div class="menu-item-label">Documento</div><div class="menu-item-desc">Rapporto, lettera, nota</div></div>
+  </button>
+  <button class="menu-item" data-prompt="Cerca il miglior fornitore per ">
+    <div class="menu-item-icon mi-slate">🔍</div>
+    <div><div class="menu-item-label">Fornitore</div><div class="menu-item-desc">Cerca e confronta prezzi</div></div>
+  </button>
+  <div class="menu-divider"></div>
+  <div class="menu-section-label">Impostazioni</div>
+  <button class="menu-item" id="menu-memoria">
+    <div class="menu-item-icon mi-gold">🧠</div>
+    <div><div class="menu-item-label">Memoria</div><div class="menu-item-desc">Cosa ho imparato su di te</div></div>
+  </button>
+  <div class="menu-bottom">
+    <button class="menu-bottom-btn" id="speak-toggle">🔊 Voce</button>
+    <button class="menu-bottom-btn" id="clear-chat-btn">🗑️ Pulisci</button>
+  </div>
+</nav>
+
+<!-- HEADER -->
+<header>
+  <div class="h-left">
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    <div class="h-logo">A</div>
+    <div><div class="h-title">Assistente</div><div class="h-sub" id="h-sub">Edilizia</div></div>
+  </div>
+  <div class="h-right">
+    <button class="icon-btn" id="keyboard-toggle" title="Tastiera">⌨️</button>
+  </div>
+</header>
+
+<!-- CHAT VIEW -->
+<div id="chat-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+  <div id="chat"></div>
+
+  <!-- text bar hidden by default -->
+  <div id="text-bar">
+    <textarea id="input-ta" placeholder="Scrivi un messaggio..." rows="1"></textarea>
+    <button class="send-btn" id="send-btn" disabled>➤</button>
+  </div>
+
+  <!-- 2 BIG ROUND BUTTONS -->
+  <div id="big-btns">
+    <div class="big-btn-wrap">
+      <button class="big-btn gold-btn" id="btn-assistente">
+        <div class="big-btn-inner">
+          <span class="big-btn-icon">A</span>
+        </div>
+      </button>
+      <span class="big-btn-label">Assistente</span>
+    </div>
+    <div class="big-btn-wrap">
+      <button class="big-btn blue-btn" id="btn-promemoria">
+        <div class="big-btn-inner">
+          <span class="big-btn-icon">🔔</span>
+        </div>
+      </button>
+      <span class="big-btn-label">Promemoria</span>
+    </div>
+  </div>
+</div>
+
+<!-- MEMORIA VIEW -->
+<div id="memoria-view">
+  <button class="mem-back" id="mem-back">← Torna alla chat</button>
+  <h2 class="mem-title">🧠 La mia memoria</h2>
+  <p class="mem-desc">Tutto ciò che ho imparato su di te.</p>
+  <div class="mem-section"><label class="mem-label">Il tuo nome</label><input class="mem-input" id="mem-nome"/></div>
+  <div class="mem-section"><label class="mem-label">Settore</label><div class="mem-val">Edilizia / Costruzioni</div></div>
+  <div class="mem-section"><label class="mem-label">Stile comunicativo</label><div class="mem-val">Cordiale ma professionale</div></div>
+  <div class="mem-section"><label class="mem-label" id="note-label">Note apprese (0)</label><div id="mem-note-content"><div class="mem-empty">Crescerà con l'uso</div></div></div>
+  <div class="mem-section"><label class="mem-label">Clienti noti</label><div id="mem-clienti-content"><div class="mem-empty">Menziona clienti nella chat</div></div></div>
+  <div class="mem-section"><label class="mem-label">Fornitori noti</label><div id="mem-fornitori-content"><div class="mem-empty">Menziona fornitori nella chat</div></div></div>
+  <button class="save-btn" id="mem-save">💾 Salva</button>
+</div>
+
+<!-- PROMEMORIA MODAL -->
+<div id="prom-modal">
+  <div class="prom-sheet">
+    <div class="prom-handle"></div>
+    <p class="prom-title">🔔 Nuovo promemoria</p>
+    <input class="prom-input" id="prom-input" placeholder="Di cosa devo ricordarti?"/>
+    <button class="prom-mic-btn" id="prom-mic">🎤&nbsp; Parla</button>
+    <button class="prom-send-btn" id="prom-send" disabled>Invia promemoria</button>
+    <button class="prom-cancel" id="prom-cancel">Annulla</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+<div id="toast"></div>
+
+<script>
+const API_KEY="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";
+const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+
+let memoria=LS.get("ass_memoria")||{nome:"",settore:"Edilizia / Costruzioni",stile:"cordiale ma professionale",clienti:[],fornitori:[],note_stile:[],ultima_modifica:null};
+let chatHistory=(LS.get("ass_chat")||[]).slice(-40);
+let loading=false,speakEnabled=true,pendingEvent=null,recog=null,keyboardVisible=false;
+
+function buildSystem(){return`Sei l'assistente personale italiano di ${memoria.nome||"un imprenditore edile"}.
+PROFILO: Settore: ${memoria.settore} | Stile: ${memoria.stile}
+Note apprese: ${memoria.note_stile.join("; ")||"nessuna"} | Clienti: ${memoria.clienti.join(", ")||"nessuno"} | Fornitori: ${memoria.fornitori.join(", ")||"nessuno"}
+REGOLE: Parla SEMPRE in italiano. Sii conciso — utente spesso in auto/cantiere.
+Email → 📧 EMAIL PRONTA:\nOGGETTO: [x]\n---\n[testo]
+Appuntamento → 📅 APPUNTAMENTO RILEVATO:\nTitolo:[x]\nData:[x]\nOra:[x]\nLuogo:[x]
+Documento → 📄 DOCUMENTO:\n[contenuto]
+Memoria → termina con 🧠 APPRESO: [cosa]
+Tono: caldo, efficiente, assistente di fiducia`}
+
+// DOM refs
+const chatEl=document.getElementById("chat"),inputEl=document.getElementById("input-ta"),sendBtn=document.getElementById("send-btn"),textBar=document.getElementById("text-bar"),setupEl=document.getElementById("setup"),setupNome=document.getElementById("setup-nome"),setupBtnEl=document.getElementById("setup-btn"),hSub=document.getElementById("h-sub"),menuOverlay=document.getElementById("menu-overlay"),sideMenu=document.getElementById("side-menu"),toastEl=document.getElementById("toast"),memoriaView=document.getElementById("memoria-view"),chatView=document.getElementById("chat-view"),promModal=document.getElementById("prom-modal"),promInput=document.getElementById("prom-input"),promSend=document.getElementById("prom-send"),btnAssistente=document.getElementById("btn-assistente"),btnPromemoria=document.getElementById("btn-promemoria");
+
+let toastTimer;
+function showToast(msg,type="ok"){toastEl.textContent=msg;toastEl.style.background=type==="err"?"#8a1a1a":"#1a5c38";toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),3200)}
+
+function speak(text){if(!speakEnabled||!window.speechSynthesis)return;window.speechSynthesis.cancel();const clean=text.replace(/[📧📅📄⏰🧠*_#\-]/g,"").slice(0,300);const u=new SpeechSynthesisUtterance(clean);u.lang="it-IT";u.rate=1.05;const voices=window.speechSynthesis.getVoices();const itV=voices.find(v=>v.lang.startsWith("it"));if(itV)u.voice=itV;window.speechSynthesis.speak(u)}
+window.speechSynthesis?.getVoices();
+
+function renderBubble(msg){const row=document.createElement("div");row.className=`msg-row ${msg.role==="user"?"user":"ai"}`;let inner=msg.role==="assistant"?`<div class="avatar">A</div>`:"";const lines=msg.content.split("\n");let bc="";for(const line of lines){if(line.startsWith("📧")||line.startsWith("📅")||line.startsWith("📄")||line.startsWith("⏰"))bc+=`<div class="b-action">${line}</div>`;else if(line.startsWith("OGGETTO:"))bc+=`<div class="b-subj">${line}</div>`;else if(line==="---")bc+=`<hr class="b-hr"/>`;else if(line.startsWith("🧠 APPRESO:"))bc+=`<div class="b-learned">${line}</div>`;else bc+=`<div>${line||"<br/>"}</div>`}const time=new Date(msg.ts).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});bc+=`<div class="btime">${time}</div>`;inner+=`<div class="bubble ${msg.role==="user"?"user":"ai"}">${bc}</div>`;row.innerHTML=inner;return row}
+
+function scrollDown(){setTimeout(()=>chatEl.scrollTop=chatEl.scrollHeight,60)}
+function showTyping(){const row=document.createElement("div");row.className="typing-row";row.id="typing";row.innerHTML=`<div class="avatar">A</div><div class="typing-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;chatEl.appendChild(row);scrollDown()}
+function hideTyping(){document.getElementById("typing")?.remove()}
+function renderEventCard(){const card=document.createElement("div");card.className="event-card";card.id="event-card";card.innerHTML=`<div class="event-title">📅 Aggiungo al calendario?</div><div class="event-btns"><button class="btn-si" id="btn-si">✅ Sì, aggiungi</button><button class="btn-no" id="btn-no">No</button></div>`;chatEl.appendChild(card);document.getElementById("btn-si")?.addEventListener("click",addToCalendar);document.getElementById("btn-no")?.addEventListener("click",()=>{pendingEvent=null;card.remove()});scrollDown()}
+
+async function send(text){if(!text?.trim()||loading)return;const userMsg={role:"user",content:text.trim(),ts:Date.now()};chatHistory.push(userMsg);chatEl.appendChild(renderBubble(userMsg));if(inputEl)inputEl.value="";if(sendBtn)sendBtn.disabled=true;loading=true;showTyping();scrollDown();btnAssistente.classList.add("listening");
+try{const messages=chatHistory.map(m=>({role:m.role,content:m.content}));const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:buildSystem(),messages})});const data=await res.json();let reply="";if(data.content)for(const b of data.content)if(b.type==="text")reply+=b.text;if(!reply)reply=data.error?.message||"Non ho ricevuto risposta. Riprova.";const aiMsg={role:"assistant",content:reply,ts:Date.now()};chatHistory.push(aiMsg);LS.set("ass_chat",chatHistory.slice(-40));hideTyping();chatEl.appendChild(renderBubble(aiMsg));if(reply.includes("📅 APPUNTAMENTO RILEVATO:")){pendingEvent=reply;renderEventCard()}if(reply.includes("🧠 APPRESO:")){const learned=reply.split("🧠 APPRESO:")[1].split("\n")[0].trim();if(learned){memoria.note_stile=[...memoria.note_stile.slice(-9),learned];memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria)}}speak(reply);scrollDown()}catch(e){hideTyping();const errMsg={role:"assistant",content:"⚠️ Errore di connessione. Controlla la rete e riprova.",ts:Date.now()};chatHistory.push(errMsg);chatEl.appendChild(renderBubble(errMsg));scrollDown()}
+loading=false;btnAssistente.classList.remove("listening")}
+
+async function addToCalendar(){document.getElementById("event-card")?.remove();if(!pendingEvent)return;try{await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,system:"Crea l'evento su Google Calendar.",messages:[{role:"user",content:`Crea questo evento: ${pendingEvent}`}],mcp_servers:[{type:"url",url:"https://gcal.mcp.claude.com/mcp",name:"gcal"}]})});showToast("✅ Aggiunto al calendario!")}catch{showToast("Errore calendario","err")}pendingEvent=null}
+
+function startVoice(onResult,onEnd){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showToast("Microfono non supportato — serve https://","err");return}if(recog){recog.stop();recog=null}recog=new SR();recog.lang="it-IT";recog.continuous=false;recog.interimResults=false;recog.onresult=e=>onResult(e.results[0][0].transcript);recog.onend=()=>{recog=null;if(onEnd)onEnd()};recog.onerror=()=>{recog=null;showToast("Errore microfono","err");if(onEnd)onEnd()};recog.start()}
+
+// BIG BUTTON — ASSISTENTE
+btnAssistente.addEventListener("click",()=>{if(loading)return;btnAssistente.classList.add("listening");startVoice(text=>send(text),()=>btnAssistente.classList.remove("listening"))});
+
+// BIG BUTTON — PROMEMORIA
+btnPromemoria.addEventListener("click",()=>{promModal.classList.add("open");promInput.value="";promSend.disabled=true;setTimeout(()=>promInput.focus(),300)});
+document.getElementById("prom-cancel").addEventListener("click",()=>promModal.classList.remove("open"));
+promInput.addEventListener("input",()=>promSend.disabled=!promInput.value.trim());
+promInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&promInput.value.trim()){promModal.classList.remove("open");send("Ricordami di "+promInput.value.trim())}});
+promSend.addEventListener("click",()=>{if(!promInput.value.trim())return;promModal.classList.remove("open");send("Ricordami di "+promInput.value.trim())});
+document.getElementById("prom-mic").addEventListener("click",()=>{const btn=document.getElementById("prom-mic");btn.textContent="⏳ Ascolto...";startVoice(text=>{promInput.value=text;promSend.disabled=false;btn.innerHTML="🎤&nbsp; Parla"},()=>{btn.innerHTML="🎤&nbsp; Parla"})});
+promModal.addEventListener("click",e=>{if(e.target===promModal)promModal.classList.remove("open")});
+
+// KEYBOARD TOGGLE
+document.getElementById("keyboard-toggle").addEventListener("click",()=>{keyboardVisible=!keyboardVisible;textBar.style.display=keyboardVisible?"flex":"none";document.getElementById("keyboard-toggle").textContent=keyboardVisible?"✕":"⌨️";if(keyboardVisible)setTimeout(()=>inputEl.focus(),100)});
+inputEl.addEventListener("input",()=>{sendBtn.disabled=!inputEl.value.trim();inputEl.style.height="auto";inputEl.style.height=Math.min(inputEl.scrollHeight,90)+"px"});
+inputEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(inputEl.value)}});
+sendBtn.addEventListener("click",()=>send(inputEl.value));
+
+// MENU
+document.getElementById("hamburger").addEventListener("click",()=>{sideMenu.classList.add("open");menuOverlay.classList.add("open")});
+menuOverlay.addEventListener("click",closeMenu);
+function closeMenu(){sideMenu.classList.remove("open");menuOverlay.classList.remove("open")}
+document.querySelectorAll(".menu-item[data-prompt]").forEach(btn=>btn.addEventListener("click",()=>{closeMenu();textBar.style.display="flex";keyboardVisible=true;document.getElementById("keyboard-toggle").textContent="✕";inputEl.value=btn.dataset.prompt;sendBtn.disabled=false;setTimeout(()=>{inputEl.focus();inputEl.setSelectionRange(inputEl.value.length,inputEl.value.length)},300)}));
+document.getElementById("menu-memoria").addEventListener("click",()=>{closeMenu();chatView.style.display="none";memoriaView.classList.add("active");document.getElementById("mem-nome").value=memoria.nome;renderMemoria()});
+document.getElementById("speak-toggle").addEventListener("click",()=>{speakEnabled=!speakEnabled;document.getElementById("speak-toggle").textContent=speakEnabled?"🔊 Voce":"🔇 Muta";showToast(speakEnabled?"Voce attivata":"Voce disattivata")});
+document.getElementById("clear-chat-btn").addEventListener("click",()=>{if(confirm("Cancellare tutta la cronologia?")){chatHistory=[];LS.set("ass_chat",[]);chatEl.innerHTML="";closeMenu();showToast("Chat pulita")}});
+
+// MEMORIA
+document.getElementById("mem-back").addEventListener("click",()=>{memoriaView.classList.remove("active");chatView.style.display="flex"});
+document.getElementById("mem-save").addEventListener("click",()=>{memoria.nome=document.getElementById("mem-nome").value.trim()||memoria.nome;memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria);hSub.textContent=`${memoria.nome} · Edilizia`;document.getElementById("menu-name").textContent=memoria.nome;memoriaView.classList.remove("active");chatView.style.display="flex";showToast("✅ Salvato!")});
+function renderMemoria(){document.getElementById("note-label").textContent=`Note apprese (${memoria.note_stile.length})`;document.getElementById("mem-note-content").innerHTML=memoria.note_stile.length===0?'<div class="mem-empty">Crescerà con l\'uso</div>':memoria.note_stile.map(n=>`<span class="mem-tag">🧠 ${n}</span>`).join("");document.getElementById("mem-clienti-content").innerHTML=memoria.clienti.length===0?'<div class="mem-empty">Menziona clienti nella chat</div>':memoria.clienti.map(c=>`<span class="mem-tag">👤 ${c}</span>`).join("");document.getElementById("mem-fornitori-content").innerHTML=memoria.fornitori.length===0?'<div class="mem-empty">Menziona fornitori nella chat</div>':memoria.fornitori.map(f=>`<span class="mem-tag">🏭 ${f}</span>`).join("")}
+
+// SETUP
+setupNome.addEventListener("input",()=>setupBtnEl.disabled=!setupNome.value.trim());
+setupNome.addEventListener("keydown",e=>{if(e.key==="Enter"&&setupNome.value.trim())completeSetup()});
+setupBtnEl.addEventListener("click",completeSetup);
+function completeSetup(){const nome=setupNome.value.trim();if(!nome)return;memoria.nome=nome;memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria);hSub.textContent=`${nome} · Edilizia`;document.getElementById("menu-name").textContent=nome;setupEl.style.display="none";if(chatHistory.length===0){const w={role:"assistant",content:`Ciao ${nome}! 👋 Sono il tuo assistente personale.\n\nPremi il pulsante dorato A per parlarmi vocalmente.\nPremi 🔔 per aggiungere un promemoria rapido.\nTutte le altre funzioni nel menu ☰ in alto a sinistra.\n\nCosa facciamo?`,ts:Date.now()};chatHistory.push(w);LS.set("ass_chat",chatHistory);chatEl.appendChild(renderBubble(w));scrollDown()}}
+
+// INIT
+function renderAll(){chatEl.innerHTML="";for(const msg of chatHistory)chatEl.appendChild(renderBubble(msg));if(pendingEvent)renderEventCard();scrollDown()}
+if(memoria.nome){setupEl.style.display="none";hSub.textContent=`${memoria.nome} · Edilizia`;document.getElementById("menu-name").textContent=memoria.nome;renderAll()}
+</script>
+</body>
+</html>
