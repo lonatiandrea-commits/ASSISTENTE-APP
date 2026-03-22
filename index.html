@@ -27,7 +27,7 @@ html,body{height:100%;height:100dvh;background:var(--bg);color:var(--text);font-
 #app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto;position:relative;overflow:hidden}
 #app::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 85%,rgba(212,168,67,0.05) 0%,transparent 55%),radial-gradient(ellipse at 85% 15%,rgba(30,90,170,0.07) 0%,transparent 55%);pointer-events:none;z-index:0}
 
-/* SETUP */
+/* SETUP NOME */
 #setup{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:200;padding:28px}
 .setup-card{text-align:center;max-width:360px;width:100%;animation:fadeUp 0.5s ease}
 .setup-logo{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:42px;font-style:italic;color:#0a0500;margin:0 auto 28px;box-shadow:0 0 48px var(--gold-glow)}
@@ -40,11 +40,25 @@ html,body{height:100%;height:100dvh;background:var(--bg);color:var(--text);font-
 .setup-btn:active{transform:scale(0.98)}.setup-btn:disabled{opacity:0.3;cursor:not-allowed}
 .setup-note{font-size:11px;color:var(--muted);margin-top:16px}
 
+/* API KEY SETUP */
+#api-setup{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--bg);z-index:200;padding:28px}
+#api-setup.show{display:flex}
+.api-card{text-align:center;max-width:380px;width:100%;animation:fadeUp 0.5s ease}
+.api-icon{font-size:48px;margin-bottom:20px}
+.api-title{font-family:var(--serif);font-size:24px;font-style:italic;margin-bottom:10px}
+.api-desc{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.6}
+.api-link{font-size:13px;color:var(--gold);margin-bottom:28px;display:block}
+.api-input{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:16px;padding:14px 16px;font-size:14px;font-family:monospace;outline:none;margin-bottom:14px;text-align:center;letter-spacing:0.02em;transition:border-color 0.2s}
+.api-input:focus{border-color:var(--gold)}
+.api-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:16px;color:#0a0500;font-weight:600;font-size:16px;font-family:var(--sans);cursor:pointer;margin-bottom:10px;transition:opacity 0.2s}
+.api-btn:disabled{opacity:0.3;cursor:not-allowed}
+.api-note{font-size:11px;color:var(--muted);line-height:1.6}
+
 /* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;z-index:20;box-shadow:0 2px 20px rgba(0,0,0,0.5)}
 .h-left{display:flex;align-items:center;gap:14px}
 .hamburger{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px}
-.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all 0.25s}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px}
 .h-logo{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:20px;font-style:italic;color:#0a0500;flex-shrink:0;box-shadow:0 0 14px var(--gold-glow)}
 .h-title{font-family:var(--serif);font-size:19px;font-style:italic}
 .h-sub{font-size:11px;color:var(--muted);margin-top:1px}
@@ -68,8 +82,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .mi-gold{background:rgba(212,168,67,0.12)}.mi-blue{background:rgba(30,90,170,0.15)}.mi-teal{background:rgba(26,130,100,0.12)}.mi-slate{background:rgba(80,100,140,0.12)}
 .menu-item-label{font-weight:500}.menu-item-desc{font-size:12px;color:var(--muted);margin-top:1px}
 .menu-divider{height:1px;background:var(--border);margin:6px 20px}
-.menu-bottom{margin-top:auto;padding:16px 20px 32px;border-top:1px solid var(--border);display:flex;gap:8px}
-.menu-bottom-btn{flex:1;padding:10px;background:var(--bg4);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.menu-bottom{margin-top:auto;padding:16px 20px 32px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
+.menu-bottom-btn{flex:1;min-width:80px;padding:10px;background:var(--bg4);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:12px;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
 .menu-bottom-btn:active{background:var(--bg3)}
 
 /* CHAT */
@@ -108,16 +122,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 /* 2 BIG BUTTONS */
 #big-btns{display:flex;gap:20px;justify-content:center;align-items:center;padding:16px 28px 32px;background:var(--bg2);border-top:1px solid var(--border);position:relative;z-index:10}
 .big-btn-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;max-width:145px}
-.big-btn{width:100%;aspect-ratio:1;max-width:118px;max-height:118px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.12s,box-shadow 0.2s;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.big-btn{width:100%;aspect-ratio:1;max-width:118px;max-height:118px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.12s,box-shadow 0.2s;position:relative;-webkit-tap-highlight-color:transparent}
 .big-btn:active{transform:scale(0.92)}
 .big-btn.gold-btn{background:linear-gradient(145deg,#e0b84e,var(--gold2));box-shadow:0 8px 32px var(--gold-glow),0 2px 10px rgba(0,0,0,0.5)}
 .big-btn.gold-btn:active{box-shadow:0 2px 14px var(--gold-glow)}
 .big-btn.blue-btn{background:linear-gradient(145deg,#2468c0,var(--blue2));box-shadow:0 8px 32px var(--blue-glow),0 2px 10px rgba(0,0,0,0.5)}
 .big-btn.blue-btn:active{box-shadow:0 2px 14px var(--blue-glow)}
 .big-btn.listening{animation:pulse-ring 1.1s ease-in-out infinite}
-.big-btn-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none}
-.big-btn-icon{font-size:36px;line-height:1}
-.big-btn-text{font-family:var(--serif);font-size:11px;font-style:italic;color:rgba(10,5,0,0.7);letter-spacing:0.04em;font-weight:600}
+.big-btn-icon{font-size:40px;pointer-events:none;font-family:var(--serif);font-style:italic;color:#0a0500;font-weight:600}
 .big-btn-label{font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
 
 /* MEMORIA */
@@ -161,7 +173,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <body>
 <div id="app">
 
-<!-- SETUP -->
+<!-- SETUP NOME -->
 <div id="setup">
   <div class="setup-card">
     <div class="setup-logo">A</div>
@@ -169,8 +181,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <p class="setup-sub">EDILIZIA · EMAIL · CALENDARIO · DOCUMENTI</p>
     <p class="setup-label">Come ti chiami?</p>
     <input class="setup-input" id="setup-nome" placeholder="Il tuo nome" autocomplete="off"/>
-    <button class="setup-btn" id="setup-btn" disabled>Inizia →</button>
-    <p class="setup-note">I tuoi dati rimangono sul tuo dispositivo</p>
+    <button class="setup-btn" id="setup-btn" disabled>Continua →</button>
+    <p class="setup-note">I tuoi dati rimangono solo sul tuo dispositivo</p>
+  </div>
+</div>
+
+<!-- API KEY SETUP -->
+<div id="api-setup">
+  <div class="api-card">
+    <div class="api-icon">🔑</div>
+    <h2 class="api-title">Chiave API Anthropic</h2>
+    <p class="api-desc">Per funzionare l'assistente ha bisogno della tua chiave API.<br/>Viene salvata <strong>solo sul tuo telefono</strong> e non è mai visibile a nessuno.</p>
+    <a class="api-link" href="https://console.anthropic.com" target="_blank">Ottieni la chiave su console.anthropic.com →</a>
+    <input class="api-input" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false"/>
+    <button class="api-btn" id="api-btn" disabled>Salva e inizia</button>
+    <p class="api-note">La chiave inizia con <code>sk-ant-api03-</code><br/>Viene memorizzata localmente sul dispositivo</p>
   </div>
 </div>
 
@@ -208,6 +233,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div class="menu-item-icon mi-gold">🧠</div>
     <div><div class="menu-item-label">Memoria</div><div class="menu-item-desc">Cosa ho imparato su di te</div></div>
   </button>
+  <button class="menu-item" id="menu-change-key">
+    <div class="menu-item-icon mi-slate">🔑</div>
+    <div><div class="menu-item-label">Cambia chiave API</div><div class="menu-item-desc">Aggiorna le credenziali</div></div>
+  </button>
   <div class="menu-bottom">
     <button class="menu-bottom-btn" id="speak-toggle">🔊 Voce</button>
     <button class="menu-bottom-btn" id="clear-chat-btn">🗑️ Pulisci</button>
@@ -229,28 +258,20 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <!-- CHAT VIEW -->
 <div id="chat-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
   <div id="chat"></div>
-
-  <!-- text bar hidden by default -->
   <div id="text-bar">
     <textarea id="input-ta" placeholder="Scrivi un messaggio..." rows="1"></textarea>
     <button class="send-btn" id="send-btn" disabled>➤</button>
   </div>
-
-  <!-- 2 BIG ROUND BUTTONS -->
   <div id="big-btns">
     <div class="big-btn-wrap">
       <button class="big-btn gold-btn" id="btn-assistente">
-        <div class="big-btn-inner">
-          <span class="big-btn-icon">A</span>
-        </div>
+        <span class="big-btn-icon">A</span>
       </button>
       <span class="big-btn-label">Assistente</span>
     </div>
     <div class="big-btn-wrap">
       <button class="big-btn blue-btn" id="btn-promemoria">
-        <div class="big-btn-inner">
-          <span class="big-btn-icon">🔔</span>
-        </div>
+        <span class="big-btn-icon">🔔</span>
       </button>
       <span class="big-btn-label">Promemoria</span>
     </div>
@@ -283,64 +304,155 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   </div>
 </div>
 
-</div><!-- #app -->
+</div>
 <div id="toast"></div>
 
 <script>
-const API_KEY="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";
 const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 
+let API_KEY=LS.get("ass_apikey")||"";
 let memoria=LS.get("ass_memoria")||{nome:"",settore:"Edilizia / Costruzioni",stile:"cordiale ma professionale",clienti:[],fornitori:[],note_stile:[],ultima_modifica:null};
 let chatHistory=(LS.get("ass_chat")||[]).slice(-40);
 let loading=false,speakEnabled=true,pendingEvent=null,recog=null,keyboardVisible=false;
+let voiceFemale=null;
+
+// ===== VOICE SETUP =====
+function initVoice(){
+  if(!window.speechSynthesis)return;
+  const load=()=>{
+    const voices=window.speechSynthesis.getVoices();
+    // Priority: Google italiano female > Microsoft female > any italian female
+    const candidates=voices.filter(v=>v.lang.startsWith("it"));
+    voiceFemale=
+      candidates.find(v=>/google/i.test(v.name)&&/femmina|female|donna|woman/i.test(v.name))||
+      candidates.find(v=>/google/i.test(v.name)&&/alice|giulia|paola|sara|laura|sofia/i.test(v.name))||
+      candidates.find(v=>/alice|giulia|paola|sara|laura|sofia/i.test(v.name))||
+      candidates.find(v=>/google/i.test(v.name))||
+      candidates[0]||null;
+  };
+  load();
+  window.speechSynthesis.onvoiceschanged=load;
+}
+initVoice();
+
+function speak(text){
+  if(!speakEnabled||!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  // Clean text for speech — remove markdown, icons, formatting
+  const clean=text
+    .replace(/📧 EMAIL PRONTA:|📅 APPUNTAMENTO RILEVATO:|📄 DOCUMENTO:|🧠 APPRESO:/g,"")
+    .replace(/OGGETTO:.*\n/g,"")
+    .replace(/---/g,"")
+    .replace(/[📧📅📄⏰🧠🔔✅⚠️*_#>\-•]/g,"")
+    .replace(/\n{2,}/g,". ")
+    .replace(/\n/g," ")
+    .replace(/\s{2,}/g," ")
+    .trim()
+    .slice(0,400);
+  if(!clean)return;
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang="it-IT";
+  u.rate=0.95;      // leggermente più lenta = più naturale
+  u.pitch=1.08;     // tono leggermente più alto = voce femminile
+  u.volume=1;
+  if(voiceFemale)u.voice=voiceFemale;
+  window.speechSynthesis.speak(u);
+}
 
 function buildSystem(){return`Sei l'assistente personale italiano di ${memoria.nome||"un imprenditore edile"}.
 PROFILO: Settore: ${memoria.settore} | Stile: ${memoria.stile}
 Note apprese: ${memoria.note_stile.join("; ")||"nessuna"} | Clienti: ${memoria.clienti.join(", ")||"nessuno"} | Fornitori: ${memoria.fornitori.join(", ")||"nessuno"}
-REGOLE: Parla SEMPRE in italiano. Sii conciso — utente spesso in auto/cantiere.
+REGOLE: Parla SEMPRE in italiano perfetto. Sii conciso — l'utente spesso è in auto o in cantiere.
 Email → 📧 EMAIL PRONTA:\nOGGETTO: [x]\n---\n[testo]
 Appuntamento → 📅 APPUNTAMENTO RILEVATO:\nTitolo:[x]\nData:[x]\nOra:[x]\nLuogo:[x]
 Documento → 📄 DOCUMENTO:\n[contenuto]
 Memoria → termina con 🧠 APPRESO: [cosa]
-Tono: caldo, efficiente, assistente di fiducia`}
+Tono: caldo, efficiente, come assistente di fiducia da anni`}
 
-// DOM refs
-const chatEl=document.getElementById("chat"),inputEl=document.getElementById("input-ta"),sendBtn=document.getElementById("send-btn"),textBar=document.getElementById("text-bar"),setupEl=document.getElementById("setup"),setupNome=document.getElementById("setup-nome"),setupBtnEl=document.getElementById("setup-btn"),hSub=document.getElementById("h-sub"),menuOverlay=document.getElementById("menu-overlay"),sideMenu=document.getElementById("side-menu"),toastEl=document.getElementById("toast"),memoriaView=document.getElementById("memoria-view"),chatView=document.getElementById("chat-view"),promModal=document.getElementById("prom-modal"),promInput=document.getElementById("prom-input"),promSend=document.getElementById("prom-send"),btnAssistente=document.getElementById("btn-assistente"),btnPromemoria=document.getElementById("btn-promemoria");
+// DOM
+const chatEl=document.getElementById("chat"),inputEl=document.getElementById("input-ta"),sendBtn=document.getElementById("send-btn"),textBar=document.getElementById("text-bar"),setupEl=document.getElementById("setup"),apiSetupEl=document.getElementById("api-setup"),setupNome=document.getElementById("setup-nome"),setupBtnEl=document.getElementById("setup-btn"),apiKeyInput=document.getElementById("api-key-input"),apiBtnEl=document.getElementById("api-btn"),hSub=document.getElementById("h-sub"),menuOverlay=document.getElementById("menu-overlay"),sideMenu=document.getElementById("side-menu"),toastEl=document.getElementById("toast"),memoriaView=document.getElementById("memoria-view"),chatView=document.getElementById("chat-view"),promModal=document.getElementById("prom-modal"),promInput=document.getElementById("prom-input"),promSend=document.getElementById("prom-send"),btnAssistente=document.getElementById("btn-assistente"),btnPromemoria=document.getElementById("btn-promemoria");
 
 let toastTimer;
 function showToast(msg,type="ok"){toastEl.textContent=msg;toastEl.style.background=type==="err"?"#8a1a1a":"#1a5c38";toastEl.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),3200)}
 
-function speak(text){if(!speakEnabled||!window.speechSynthesis)return;window.speechSynthesis.cancel();const clean=text.replace(/[📧📅📄⏰🧠*_#\-]/g,"").slice(0,300);const u=new SpeechSynthesisUtterance(clean);u.lang="it-IT";u.rate=1.05;const voices=window.speechSynthesis.getVoices();const itV=voices.find(v=>v.lang.startsWith("it"));if(itV)u.voice=itV;window.speechSynthesis.speak(u)}
-window.speechSynthesis?.getVoices();
-
-function renderBubble(msg){const row=document.createElement("div");row.className=`msg-row ${msg.role==="user"?"user":"ai"}`;let inner=msg.role==="assistant"?`<div class="avatar">A</div>`:"";const lines=msg.content.split("\n");let bc="";for(const line of lines){if(line.startsWith("📧")||line.startsWith("📅")||line.startsWith("📄")||line.startsWith("⏰"))bc+=`<div class="b-action">${line}</div>`;else if(line.startsWith("OGGETTO:"))bc+=`<div class="b-subj">${line}</div>`;else if(line==="---")bc+=`<hr class="b-hr"/>`;else if(line.startsWith("🧠 APPRESO:"))bc+=`<div class="b-learned">${line}</div>`;else bc+=`<div>${line||"<br/>"}</div>`}const time=new Date(msg.ts).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});bc+=`<div class="btime">${time}</div>`;inner+=`<div class="bubble ${msg.role==="user"?"user":"ai"}">${bc}</div>`;row.innerHTML=inner;return row}
+function renderBubble(msg){
+  const row=document.createElement("div");row.className=`msg-row ${msg.role==="user"?"user":"ai"}`;
+  let inner=msg.role==="assistant"?`<div class="avatar">A</div>`:"";
+  const lines=msg.content.split("\n");let bc="";
+  for(const line of lines){
+    if(line.startsWith("📧")||line.startsWith("📅")||line.startsWith("📄")||line.startsWith("⏰"))bc+=`<div class="b-action">${line}</div>`;
+    else if(line.startsWith("OGGETTO:"))bc+=`<div class="b-subj">${line}</div>`;
+    else if(line==="---")bc+=`<hr class="b-hr"/>`;
+    else if(line.startsWith("🧠 APPRESO:"))bc+=`<div class="b-learned">${line}</div>`;
+    else bc+=`<div>${line||"<br/>"}</div>`;
+  }
+  const time=new Date(msg.ts).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
+  bc+=`<div class="btime">${time}</div>`;
+  inner+=`<div class="bubble ${msg.role==="user"?"user":"ai"}">${bc}</div>`;
+  row.innerHTML=inner;return row;
+}
 
 function scrollDown(){setTimeout(()=>chatEl.scrollTop=chatEl.scrollHeight,60)}
 function showTyping(){const row=document.createElement("div");row.className="typing-row";row.id="typing";row.innerHTML=`<div class="avatar">A</div><div class="typing-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;chatEl.appendChild(row);scrollDown()}
 function hideTyping(){document.getElementById("typing")?.remove()}
 function renderEventCard(){const card=document.createElement("div");card.className="event-card";card.id="event-card";card.innerHTML=`<div class="event-title">📅 Aggiungo al calendario?</div><div class="event-btns"><button class="btn-si" id="btn-si">✅ Sì, aggiungi</button><button class="btn-no" id="btn-no">No</button></div>`;chatEl.appendChild(card);document.getElementById("btn-si")?.addEventListener("click",addToCalendar);document.getElementById("btn-no")?.addEventListener("click",()=>{pendingEvent=null;card.remove()});scrollDown()}
 
-async function send(text){if(!text?.trim()||loading)return;const userMsg={role:"user",content:text.trim(),ts:Date.now()};chatHistory.push(userMsg);chatEl.appendChild(renderBubble(userMsg));if(inputEl)inputEl.value="";if(sendBtn)sendBtn.disabled=true;loading=true;showTyping();scrollDown();btnAssistente.classList.add("listening");
-try{const messages=chatHistory.map(m=>({role:m.role,content:m.content}));const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:buildSystem(),messages})});const data=await res.json();let reply="";if(data.content)for(const b of data.content)if(b.type==="text")reply+=b.text;if(!reply)reply=data.error?.message||"Non ho ricevuto risposta. Riprova.";const aiMsg={role:"assistant",content:reply,ts:Date.now()};chatHistory.push(aiMsg);LS.set("ass_chat",chatHistory.slice(-40));hideTyping();chatEl.appendChild(renderBubble(aiMsg));if(reply.includes("📅 APPUNTAMENTO RILEVATO:")){pendingEvent=reply;renderEventCard()}if(reply.includes("🧠 APPRESO:")){const learned=reply.split("🧠 APPRESO:")[1].split("\n")[0].trim();if(learned){memoria.note_stile=[...memoria.note_stile.slice(-9),learned];memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria)}}speak(reply);scrollDown()}catch(e){hideTyping();const errMsg={role:"assistant",content:"⚠️ Errore di connessione. Controlla la rete e riprova.",ts:Date.now()};chatHistory.push(errMsg);chatEl.appendChild(renderBubble(errMsg));scrollDown()}
-loading=false;btnAssistente.classList.remove("listening")}
+async function send(text){
+  if(!text?.trim()||loading)return;
+  if(!API_KEY){showToast("Inserisci prima la chiave API","err");return}
+  const userMsg={role:"user",content:text.trim(),ts:Date.now()};
+  chatHistory.push(userMsg);chatEl.appendChild(renderBubble(userMsg));
+  if(inputEl)inputEl.value="";if(sendBtn)sendBtn.disabled=true;
+  loading=true;showTyping();scrollDown();btnAssistente.classList.add("listening");
+  try{
+    const messages=chatHistory.map(m=>({role:m.role,content:m.content}));
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:buildSystem(),messages})
+    });
+    const data=await res.json();
+    let reply="";
+    if(data.content)for(const b of data.content)if(b.type==="text")reply+=b.text;
+    if(!reply)reply=data.error?.message||"Non ho ricevuto risposta. Riprova.";
+    const aiMsg={role:"assistant",content:reply,ts:Date.now()};
+    chatHistory.push(aiMsg);LS.set("ass_chat",chatHistory.slice(-40));
+    hideTyping();chatEl.appendChild(renderBubble(aiMsg));
+    if(reply.includes("📅 APPUNTAMENTO RILEVATO:")){pendingEvent=reply;renderEventCard()}
+    if(reply.includes("🧠 APPRESO:")){const learned=reply.split("🧠 APPRESO:")[1].split("\n")[0].trim();if(learned){memoria.note_stile=[...memoria.note_stile.slice(-9),learned];memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria)}}
+    speak(reply);scrollDown();
+  }catch(e){
+    hideTyping();
+    const errMsg={role:"assistant",content:"⚠️ Errore di connessione. Controlla la rete e riprova.",ts:Date.now()};
+    chatHistory.push(errMsg);chatEl.appendChild(renderBubble(errMsg));scrollDown();
+  }
+  loading=false;btnAssistente.classList.remove("listening");
+}
 
 async function addToCalendar(){document.getElementById("event-card")?.remove();if(!pendingEvent)return;try{await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,system:"Crea l'evento su Google Calendar.",messages:[{role:"user",content:`Crea questo evento: ${pendingEvent}`}],mcp_servers:[{type:"url",url:"https://gcal.mcp.claude.com/mcp",name:"gcal"}]})});showToast("✅ Aggiunto al calendario!")}catch{showToast("Errore calendario","err")}pendingEvent=null}
 
-function startVoice(onResult,onEnd){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showToast("Microfono non supportato — serve https://","err");return}if(recog){recog.stop();recog=null}recog=new SR();recog.lang="it-IT";recog.continuous=false;recog.interimResults=false;recog.onresult=e=>onResult(e.results[0][0].transcript);recog.onend=()=>{recog=null;if(onEnd)onEnd()};recog.onerror=()=>{recog=null;showToast("Errore microfono","err");if(onEnd)onEnd()};recog.start()}
+function startVoice(onResult,onEnd){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showToast("Microfono non supportato","err");return}
+  if(recog){recog.stop();recog=null}
+  recog=new SR();recog.lang="it-IT";recog.continuous=false;recog.interimResults=false;
+  recog.onresult=e=>onResult(e.results[0][0].transcript);
+  recog.onend=()=>{recog=null;if(onEnd)onEnd()};
+  recog.onerror=()=>{recog=null;showToast("Errore microfono","err");if(onEnd)onEnd()};
+  recog.start();
+}
 
-// BIG BUTTON — ASSISTENTE
+// BIG BUTTONS
 btnAssistente.addEventListener("click",()=>{if(loading)return;btnAssistente.classList.add("listening");startVoice(text=>send(text),()=>btnAssistente.classList.remove("listening"))});
-
-// BIG BUTTON — PROMEMORIA
 btnPromemoria.addEventListener("click",()=>{promModal.classList.add("open");promInput.value="";promSend.disabled=true;setTimeout(()=>promInput.focus(),300)});
 document.getElementById("prom-cancel").addEventListener("click",()=>promModal.classList.remove("open"));
 promInput.addEventListener("input",()=>promSend.disabled=!promInput.value.trim());
 promInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&promInput.value.trim()){promModal.classList.remove("open");send("Ricordami di "+promInput.value.trim())}});
 promSend.addEventListener("click",()=>{if(!promInput.value.trim())return;promModal.classList.remove("open");send("Ricordami di "+promInput.value.trim())});
-document.getElementById("prom-mic").addEventListener("click",()=>{const btn=document.getElementById("prom-mic");btn.textContent="⏳ Ascolto...";startVoice(text=>{promInput.value=text;promSend.disabled=false;btn.innerHTML="🎤&nbsp; Parla"},()=>{btn.innerHTML="🎤&nbsp; Parla"})});
+document.getElementById("prom-mic").addEventListener("click",()=>{const btn=document.getElementById("prom-mic");btn.innerHTML="⏳&nbsp; Ascolto...";startVoice(text=>{promInput.value=text;promSend.disabled=false;btn.innerHTML="🎤&nbsp; Parla"},()=>{btn.innerHTML="🎤&nbsp; Parla"})});
 promModal.addEventListener("click",e=>{if(e.target===promModal)promModal.classList.remove("open")});
 
-// KEYBOARD TOGGLE
+// KEYBOARD
 document.getElementById("keyboard-toggle").addEventListener("click",()=>{keyboardVisible=!keyboardVisible;textBar.style.display=keyboardVisible?"flex":"none";document.getElementById("keyboard-toggle").textContent=keyboardVisible?"✕":"⌨️";if(keyboardVisible)setTimeout(()=>inputEl.focus(),100)});
 inputEl.addEventListener("input",()=>{sendBtn.disabled=!inputEl.value.trim();inputEl.style.height="auto";inputEl.style.height=Math.min(inputEl.scrollHeight,90)+"px"});
 inputEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(inputEl.value)}});
@@ -352,6 +464,7 @@ menuOverlay.addEventListener("click",closeMenu);
 function closeMenu(){sideMenu.classList.remove("open");menuOverlay.classList.remove("open")}
 document.querySelectorAll(".menu-item[data-prompt]").forEach(btn=>btn.addEventListener("click",()=>{closeMenu();textBar.style.display="flex";keyboardVisible=true;document.getElementById("keyboard-toggle").textContent="✕";inputEl.value=btn.dataset.prompt;sendBtn.disabled=false;setTimeout(()=>{inputEl.focus();inputEl.setSelectionRange(inputEl.value.length,inputEl.value.length)},300)}));
 document.getElementById("menu-memoria").addEventListener("click",()=>{closeMenu();chatView.style.display="none";memoriaView.classList.add("active");document.getElementById("mem-nome").value=memoria.nome;renderMemoria()});
+document.getElementById("menu-change-key").addEventListener("click",()=>{closeMenu();apiKeyInput.value="";apiBtnEl.disabled=true;apiSetupEl.classList.add("show")});
 document.getElementById("speak-toggle").addEventListener("click",()=>{speakEnabled=!speakEnabled;document.getElementById("speak-toggle").textContent=speakEnabled?"🔊 Voce":"🔇 Muta";showToast(speakEnabled?"Voce attivata":"Voce disattivata")});
 document.getElementById("clear-chat-btn").addEventListener("click",()=>{if(confirm("Cancellare tutta la cronologia?")){chatHistory=[];LS.set("ass_chat",[]);chatEl.innerHTML="";closeMenu();showToast("Chat pulita")}});
 
@@ -360,15 +473,39 @@ document.getElementById("mem-back").addEventListener("click",()=>{memoriaView.cl
 document.getElementById("mem-save").addEventListener("click",()=>{memoria.nome=document.getElementById("mem-nome").value.trim()||memoria.nome;memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria);hSub.textContent=`${memoria.nome} · Edilizia`;document.getElementById("menu-name").textContent=memoria.nome;memoriaView.classList.remove("active");chatView.style.display="flex";showToast("✅ Salvato!")});
 function renderMemoria(){document.getElementById("note-label").textContent=`Note apprese (${memoria.note_stile.length})`;document.getElementById("mem-note-content").innerHTML=memoria.note_stile.length===0?'<div class="mem-empty">Crescerà con l\'uso</div>':memoria.note_stile.map(n=>`<span class="mem-tag">🧠 ${n}</span>`).join("");document.getElementById("mem-clienti-content").innerHTML=memoria.clienti.length===0?'<div class="mem-empty">Menziona clienti nella chat</div>':memoria.clienti.map(c=>`<span class="mem-tag">👤 ${c}</span>`).join("");document.getElementById("mem-fornitori-content").innerHTML=memoria.fornitori.length===0?'<div class="mem-empty">Menziona fornitori nella chat</div>':memoria.fornitori.map(f=>`<span class="mem-tag">🏭 ${f}</span>`).join("")}
 
-// SETUP
+// SETUP NOME
 setupNome.addEventListener("input",()=>setupBtnEl.disabled=!setupNome.value.trim());
-setupNome.addEventListener("keydown",e=>{if(e.key==="Enter"&&setupNome.value.trim())completeSetup()});
-setupBtnEl.addEventListener("click",completeSetup);
-function completeSetup(){const nome=setupNome.value.trim();if(!nome)return;memoria.nome=nome;memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria);hSub.textContent=`${nome} · Edilizia`;document.getElementById("menu-name").textContent=nome;setupEl.style.display="none";if(chatHistory.length===0){const w={role:"assistant",content:`Ciao ${nome}! 👋 Sono il tuo assistente personale.\n\nPremi il pulsante dorato A per parlarmi vocalmente.\nPremi 🔔 per aggiungere un promemoria rapido.\nTutte le altre funzioni nel menu ☰ in alto a sinistra.\n\nCosa facciamo?`,ts:Date.now()};chatHistory.push(w);LS.set("ass_chat",chatHistory);chatEl.appendChild(renderBubble(w));scrollDown()}}
+setupNome.addEventListener("keydown",e=>{if(e.key==="Enter"&&setupNome.value.trim())goToApiSetup()});
+setupBtnEl.addEventListener("click",goToApiSetup);
+function goToApiSetup(){
+  const nome=setupNome.value.trim();if(!nome)return;
+  memoria.nome=nome;memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria);
+  hSub.textContent=`${nome} · Edilizia`;document.getElementById("menu-name").textContent=nome;
+  setupEl.style.display="none";
+  if(!API_KEY){apiSetupEl.classList.add("show")}
+  else{startChat(nome)}
+}
+
+// API KEY SETUP
+apiKeyInput.addEventListener("input",()=>apiBtnEl.disabled=!apiKeyInput.value.trim().startsWith("sk-ant"));
+apiBtnEl.addEventListener("click",()=>{
+  const key=apiKeyInput.value.trim();if(!key)return;
+  API_KEY=key;LS.set("ass_apikey",key);
+  apiSetupEl.classList.remove("show");
+  startChat(memoria.nome);
+});
+
+function startChat(nome){
+  if(chatHistory.length===0){
+    const w={role:"assistant",content:`Ciao ${nome}! 👋 Sono il tuo assistente personale.\n\nPremi il pulsante dorato A per parlarmi vocalmente.\nPremi 🔔 per un promemoria rapido.\nTutte le altre funzioni nel menu ☰ in alto a sinistra.\n\nCosa facciamo?`,ts:Date.now()};
+    chatHistory.push(w);LS.set("ass_chat",chatHistory);chatEl.appendChild(renderBubble(w));scrollDown();
+  }
+}
 
 // INIT
 function renderAll(){chatEl.innerHTML="";for(const msg of chatHistory)chatEl.appendChild(renderBubble(msg));if(pendingEvent)renderEventCard();scrollDown()}
-if(memoria.nome){setupEl.style.display="none";hSub.textContent=`${memoria.nome} · Edilizia`;document.getElementById("menu-name").textContent=memoria.nome;renderAll()}
+if(memoria.nome&&API_KEY){setupEl.style.display="none";hSub.textContent=`${memoria.nome} · Edilizia`;document.getElementById("menu-name").textContent=memoria.nome;renderAll()}
+else if(memoria.nome&&!API_KEY){setupEl.style.display="none";apiSetupEl.classList.add("show")}
 </script>
 </body>
 </html>
