@@ -473,7 +473,7 @@ function googleAuth(){
   if(!GOOGLE_CLIENT_ID){showToast("Client ID mancante","err");return}
   const params=new URLSearchParams({
     client_id:GOOGLE_CLIENT_ID,
-    redirect_uri:"https://lonatiandrea-commits.github.io/ASSISTENTE-APP/",
+    redirect_uri:"https://assistente-personale-sxil.vercel.app",
     response_type:"token",
     scope:GOOGLE_SCOPES,
     prompt:"consent"
