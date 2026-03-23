@@ -48,9 +48,9 @@ html,body{height:100%;height:100dvh;background:var(--bg);color:var(--text);font-
 .api-title{font-family:var(--serif);font-size:24px;font-style:italic;margin-bottom:10px}
 .api-desc{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.6}
 .api-link{font-size:13px;color:var(--gold);margin-bottom:28px;display:block}
-.api-input{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:16px;padding:14px 16px;font-size:14px;font-family:monospace;outline:none;margin-bottom:14px;text-align:center;letter-spacing:0.02em;transition:border-color 0.2s}
+.api-input{width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:16px;padding:14px 16px;font-size:13px;font-family:monospace;outline:none;margin-bottom:14px;text-align:center;transition:border-color 0.2s}
 .api-input:focus{border-color:var(--gold)}
-.api-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:16px;color:#0a0500;font-weight:600;font-size:16px;font-family:var(--sans);cursor:pointer;margin-bottom:10px;transition:opacity 0.2s}
+.api-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:16px;color:#0a0500;font-weight:600;font-size:16px;font-family:var(--sans);cursor:pointer;margin-bottom:10px}
 .api-btn:disabled{opacity:0.3;cursor:not-allowed}
 .api-note{font-size:11px;color:var(--muted);line-height:1.6}
 
@@ -101,6 +101,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 .b-subj{background:rgba(212,168,67,0.08);border-left:2px solid var(--gold);padding:4px 8px;border-radius:0 6px 6px 0;font-size:13px;color:var(--gold);margin-bottom:6px}
 .b-learned{font-size:11px;color:#4a8a5a;font-style:italic;margin-top:6px}
 .b-hr{border:none;border-top:1px solid var(--border);margin:6px 0}
+.b-search{font-size:11px;color:var(--muted);font-style:italic;margin-bottom:4px}
 .typing-row{display:flex;align-items:flex-end;gap:8px;animation:fadeUp 0.2s ease}
 .typing-dots{display:flex;gap:5px;padding:13px 16px;background:var(--ai-b);border-radius:18px 18px 18px 4px;border:1px solid var(--border)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:bounce 1s infinite}
@@ -173,7 +174,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <body>
 <div id="app">
 
-<!-- SETUP NOME -->
 <div id="setup">
   <div class="setup-card">
     <div class="setup-logo">A</div>
@@ -186,20 +186,18 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   </div>
 </div>
 
-<!-- API KEY SETUP -->
 <div id="api-setup">
   <div class="api-card">
     <div class="api-icon">🔑</div>
     <h2 class="api-title">Chiave API Anthropic</h2>
-    <p class="api-desc">Per funzionare l'assistente ha bisogno della tua chiave API.<br/>Viene salvata <strong>solo sul tuo telefono</strong> e non è mai visibile a nessuno.</p>
+    <p class="api-desc">Inserisci la tua chiave API.<br/>Viene salvata <strong>solo sul tuo telefono</strong>.</p>
     <a class="api-link" href="https://console.anthropic.com" target="_blank">Ottieni la chiave su console.anthropic.com →</a>
     <input class="api-input" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false"/>
     <button class="api-btn" id="api-btn" disabled>Salva e inizia</button>
-    <p class="api-note">La chiave inizia con <code>sk-ant-api03-</code><br/>Viene memorizzata localmente sul dispositivo</p>
+    <p class="api-note">La chiave inizia con <code>sk-ant-api03-</code></p>
   </div>
 </div>
 
-<!-- MENU OVERLAY + SIDE MENU -->
 <div id="menu-overlay"></div>
 <nav id="side-menu">
   <div class="menu-header">
@@ -207,43 +205,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div><div class="menu-name" id="menu-name">Assistente</div><div class="menu-role">Edilizia · Costruzioni</div></div>
   </div>
   <div class="menu-section-label">Azioni rapide</div>
-  <button class="menu-item" data-prompt="Devo scrivere un'email a ">
-    <div class="menu-item-icon mi-gold">📧</div>
-    <div><div class="menu-item-label">Email</div><div class="menu-item-desc">Scrivi nel tuo stile</div></div>
-  </button>
-  <button class="menu-item" data-prompt="Aggiungi appuntamento: ">
-    <div class="menu-item-icon mi-blue">📅</div>
-    <div><div class="menu-item-label">Appuntamento</div><div class="menu-item-desc">Salva su calendario</div></div>
-  </button>
-  <button class="menu-item" data-prompt="Crea un preventivo per ">
-    <div class="menu-item-icon mi-gold">📋</div>
-    <div><div class="menu-item-label">Preventivo</div><div class="menu-item-desc">Genera offerta</div></div>
-  </button>
-  <button class="menu-item" data-prompt="Crea un documento: ">
-    <div class="menu-item-icon mi-teal">✒️</div>
-    <div><div class="menu-item-label">Documento</div><div class="menu-item-desc">Rapporto, lettera, nota</div></div>
-  </button>
-  <button class="menu-item" data-prompt="Cerca il miglior fornitore per ">
-    <div class="menu-item-icon mi-slate">🔍</div>
-    <div><div class="menu-item-label">Fornitore</div><div class="menu-item-desc">Cerca e confronta prezzi</div></div>
-  </button>
+  <button class="menu-item" data-prompt="Devo scrivere un'email a "><div class="menu-item-icon mi-gold">📧</div><div><div class="menu-item-label">Email</div><div class="menu-item-desc">Scrivi nel tuo stile</div></div></button>
+  <button class="menu-item" data-prompt="Aggiungi appuntamento: "><div class="menu-item-icon mi-blue">📅</div><div><div class="menu-item-label">Appuntamento</div><div class="menu-item-desc">Salva su calendario</div></div></button>
+  <button class="menu-item" data-prompt="Crea un preventivo per "><div class="menu-item-icon mi-gold">📋</div><div><div class="menu-item-label">Preventivo</div><div class="menu-item-desc">Genera offerta</div></div></button>
+  <button class="menu-item" data-prompt="Crea un documento: "><div class="menu-item-icon mi-teal">✒️</div><div><div class="menu-item-label">Documento</div><div class="menu-item-desc">Rapporto, lettera, nota</div></div></button>
+  <button class="menu-item" data-prompt="Cerca online: "><div class="menu-item-icon mi-slate">🔍</div><div><div class="menu-item-label">Cerca</div><div class="menu-item-desc">Web, fornitori, prezzi</div></div></button>
   <div class="menu-divider"></div>
   <div class="menu-section-label">Impostazioni</div>
-  <button class="menu-item" id="menu-memoria">
-    <div class="menu-item-icon mi-gold">🧠</div>
-    <div><div class="menu-item-label">Memoria</div><div class="menu-item-desc">Cosa ho imparato su di te</div></div>
-  </button>
-  <button class="menu-item" id="menu-change-key">
-    <div class="menu-item-icon mi-slate">🔑</div>
-    <div><div class="menu-item-label">Cambia chiave API</div><div class="menu-item-desc">Aggiorna le credenziali</div></div>
-  </button>
+  <button class="menu-item" id="menu-memoria"><div class="menu-item-icon mi-gold">🧠</div><div><div class="menu-item-label">Memoria</div><div class="menu-item-desc">Cosa ho imparato su di te</div></div></button>
+  <button class="menu-item" id="menu-change-key"><div class="menu-item-icon mi-slate">🔑</div><div><div class="menu-item-label">Cambia chiave API</div><div class="menu-item-desc">Aggiorna le credenziali</div></div></button>
   <div class="menu-bottom">
     <button class="menu-bottom-btn" id="speak-toggle">🔊 Voce</button>
     <button class="menu-bottom-btn" id="clear-chat-btn">🗑️ Pulisci</button>
   </div>
 </nav>
 
-<!-- HEADER -->
 <header>
   <div class="h-left">
     <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
@@ -251,11 +227,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
     <div><div class="h-title">Assistente</div><div class="h-sub" id="h-sub">Edilizia</div></div>
   </div>
   <div class="h-right">
-    <button class="icon-btn" id="keyboard-toggle" title="Tastiera">⌨️</button>
+    <button class="icon-btn" id="keyboard-toggle">⌨️</button>
   </div>
 </header>
 
-<!-- CHAT VIEW -->
 <div id="chat-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
   <div id="chat"></div>
   <div id="text-bar">
@@ -264,21 +239,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   </div>
   <div id="big-btns">
     <div class="big-btn-wrap">
-      <button class="big-btn gold-btn" id="btn-assistente">
-        <span class="big-btn-icon">A</span>
-      </button>
+      <button class="big-btn gold-btn" id="btn-assistente"><span class="big-btn-icon">A</span></button>
       <span class="big-btn-label">Assistente</span>
     </div>
     <div class="big-btn-wrap">
-      <button class="big-btn blue-btn" id="btn-promemoria">
-        <span class="big-btn-icon">🔔</span>
-      </button>
+      <button class="big-btn blue-btn" id="btn-promemoria"><span class="big-btn-icon">🔔</span></button>
       <span class="big-btn-label">Promemoria</span>
     </div>
   </div>
 </div>
 
-<!-- MEMORIA VIEW -->
 <div id="memoria-view">
   <button class="mem-back" id="mem-back">← Torna alla chat</button>
   <h2 class="mem-title">🧠 La mia memoria</h2>
@@ -292,7 +262,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   <button class="save-btn" id="mem-save">💾 Salva</button>
 </div>
 
-<!-- PROMEMORIA MODAL -->
 <div id="prom-modal">
   <div class="prom-sheet">
     <div class="prom-handle"></div>
@@ -316,60 +285,92 @@ let chatHistory=(LS.get("ass_chat")||[]).slice(-40);
 let loading=false,speakEnabled=true,pendingEvent=null,recog=null,keyboardVisible=false;
 let voiceFemale=null;
 
-// ===== VOICE SETUP =====
+// ===== VOICE — natural female Italian =====
 function initVoice(){
   if(!window.speechSynthesis)return;
-  const load=()=>{
-    const voices=window.speechSynthesis.getVoices();
-    // Priority: Google italiano female > Microsoft female > any italian female
-    const candidates=voices.filter(v=>v.lang.startsWith("it"));
+  const pick=()=>{
+    const all=window.speechSynthesis.getVoices();
+    const it=all.filter(v=>v.lang.startsWith("it"));
+    // Best female candidates in priority order
     voiceFemale=
-      candidates.find(v=>/google/i.test(v.name)&&/femmina|female|donna|woman/i.test(v.name))||
-      candidates.find(v=>/google/i.test(v.name)&&/alice|giulia|paola|sara|laura|sofia/i.test(v.name))||
-      candidates.find(v=>/alice|giulia|paola|sara|laura|sofia/i.test(v.name))||
-      candidates.find(v=>/google/i.test(v.name))||
-      candidates[0]||null;
+      it.find(v=>/google/i.test(v.name)&&/giulia|alice|paola|sara|laura|sofia|female|donna/i.test(v.name))||
+      it.find(v=>/giulia|alice|paola|sara|laura|sofia/i.test(v.name))||
+      it.find(v=>/google/i.test(v.name))||
+      it[0]||null;
   };
-  load();
-  window.speechSynthesis.onvoiceschanged=load;
+  pick();
+  window.speechSynthesis.onvoiceschanged=pick;
 }
 initVoice();
 
-function speak(text){
-  if(!speakEnabled||!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  // Clean text for speech — remove markdown, icons, formatting
-  const clean=text
-    .replace(/📧 EMAIL PRONTA:|📅 APPUNTAMENTO RILEVATO:|📄 DOCUMENTO:|🧠 APPRESO:/g,"")
-    .replace(/OGGETTO:.*\n/g,"")
-    .replace(/---/g,"")
-    .replace(/[📧📅📄⏰🧠🔔✅⚠️*_#>\-•]/g,"")
+// Split text into natural short sentences for smoother reading
+function splitIntoSentences(text){
+  return text
+    .split(/(?<=[.!?;])\s+|(?<=,)\s+(?=\w{4,})/)
+    .map(s=>s.trim())
+    .filter(s=>s.length>2);
+}
+
+function cleanForSpeech(text){
+  return text
+    .replace(/📧 EMAIL PRONTA:|📅 APPUNTAMENTO RILEVATO:|📄 DOCUMENTO:|🧠 APPRESO:|🔍 RICERCA:/g,"")
+    .replace(/OGGETTO:.*$/gm,"")
+    .replace(/---+/g,".")
+    .replace(/https?:\/\/\S+/g,"")
+    .replace(/[📧📅📄⏰🧠🔔✅⚠️🔍*_#>\-•→]/g,"")
     .replace(/\n{2,}/g,". ")
     .replace(/\n/g," ")
     .replace(/\s{2,}/g," ")
-    .trim()
-    .slice(0,400);
-  if(!clean)return;
-  const u=new SpeechSynthesisUtterance(clean);
-  u.lang="it-IT";
-  u.rate=0.95;      // leggermente più lenta = più naturale
-  u.pitch=1.08;     // tono leggermente più alto = voce femminile
-  u.volume=1;
-  if(voiceFemale)u.voice=voiceFemale;
-  window.speechSynthesis.speak(u);
+    .replace(/\.\s*\./g,".")
+    .trim();
 }
 
-function buildSystem(){return`Sei l'assistente personale italiano di ${memoria.nome||"un imprenditore edile"}.
+function speakNatural(text){
+  if(!speakEnabled||!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const cleaned=cleanForSpeech(text).slice(0,500);
+  if(!cleaned)return;
+  const sentences=splitIntoSentences(cleaned);
+  let i=0;
+  function speakNext(){
+    if(i>=sentences.length)return;
+    const u=new SpeechSynthesisUtterance(sentences[i]);
+    u.lang="it-IT";
+    u.rate=0.88;
+    u.pitch=1.1;
+    u.volume=1;
+    if(voiceFemale)u.voice=voiceFemale;
+    u.onend=()=>{ i++; setTimeout(speakNext,120); };
+    u.onerror=()=>{ i++; speakNext(); };
+    window.speechSynthesis.speak(u);
+  }
+  speakNext();
+}
+
+function buildSystem(){
+  return`Sei l'assistente personale italiano di ${memoria.nome||"un imprenditore edile"}.
 PROFILO: Settore: ${memoria.settore} | Stile: ${memoria.stile}
 Note apprese: ${memoria.note_stile.join("; ")||"nessuna"} | Clienti: ${memoria.clienti.join(", ")||"nessuno"} | Fornitori: ${memoria.fornitori.join(", ")||"nessuno"}
-REGOLE: Parla SEMPRE in italiano perfetto. Sii conciso — l'utente spesso è in auto o in cantiere.
-Email → 📧 EMAIL PRONTA:\nOGGETTO: [x]\n---\n[testo]
-Appuntamento → 📅 APPUNTAMENTO RILEVATO:\nTitolo:[x]\nData:[x]\nOra:[x]\nLuogo:[x]
-Documento → 📄 DOCUMENTO:\n[contenuto]
-Memoria → termina con 🧠 APPRESO: [cosa]
-Tono: caldo, efficiente, come assistente di fiducia da anni`}
 
-// DOM
+CAPACITÀ — hai accesso a ricerca web in tempo reale tramite tool. Usala SEMPRE per:
+- Orari voli, treni, prezzi biglietti
+- Prezzi materiali edili e fornitori
+- Meteo, notizie, informazioni aggiornate
+- Qualsiasi dato che cambia nel tempo
+
+REGOLE:
+- Parla SEMPRE in italiano perfetto
+- Sii conciso — l'utente spesso è in auto o in cantiere
+- Quando cerchi sul web, mostra i risultati in modo chiaro e leggibile
+- Email → 📧 EMAIL PRONTA:\nOGGETTO: [x]\n---\n[testo]
+- Appuntamento → 📅 APPUNTAMENTO RILEVATO:\nTitolo:[x]\nData:[x]\nOra:[x]\nLuogo:[x]
+- Documento → 📄 DOCUMENTO:\n[contenuto]
+- Ricerca web → 🔍 RICERCA:\n[risultati chiari e sintetici]
+- Memoria → termina con 🧠 APPRESO: [cosa]
+- Tono: caldo, efficiente, come assistente di fiducia`;
+}
+
+// DOM refs
 const chatEl=document.getElementById("chat"),inputEl=document.getElementById("input-ta"),sendBtn=document.getElementById("send-btn"),textBar=document.getElementById("text-bar"),setupEl=document.getElementById("setup"),apiSetupEl=document.getElementById("api-setup"),setupNome=document.getElementById("setup-nome"),setupBtnEl=document.getElementById("setup-btn"),apiKeyInput=document.getElementById("api-key-input"),apiBtnEl=document.getElementById("api-btn"),hSub=document.getElementById("h-sub"),menuOverlay=document.getElementById("menu-overlay"),sideMenu=document.getElementById("side-menu"),toastEl=document.getElementById("toast"),memoriaView=document.getElementById("memoria-view"),chatView=document.getElementById("chat-view"),promModal=document.getElementById("prom-modal"),promInput=document.getElementById("prom-input"),promSend=document.getElementById("prom-send"),btnAssistente=document.getElementById("btn-assistente"),btnPromemoria=document.getElementById("btn-promemoria");
 
 let toastTimer;
@@ -380,7 +381,8 @@ function renderBubble(msg){
   let inner=msg.role==="assistant"?`<div class="avatar">A</div>`:"";
   const lines=msg.content.split("\n");let bc="";
   for(const line of lines){
-    if(line.startsWith("📧")||line.startsWith("📅")||line.startsWith("📄")||line.startsWith("⏰"))bc+=`<div class="b-action">${line}</div>`;
+    if(line.startsWith("📧")||line.startsWith("📅")||line.startsWith("📄")||line.startsWith("⏰")||line.startsWith("🔍"))
+      bc+=`<div class="b-action">${line}</div>`;
     else if(line.startsWith("OGGETTO:"))bc+=`<div class="b-subj">${line}</div>`;
     else if(line==="---")bc+=`<hr class="b-hr"/>`;
     else if(line.startsWith("🧠 APPRESO:"))bc+=`<div class="b-learned">${line}</div>`;
@@ -404,23 +406,43 @@ async function send(text){
   chatHistory.push(userMsg);chatEl.appendChild(renderBubble(userMsg));
   if(inputEl)inputEl.value="";if(sendBtn)sendBtn.disabled=true;
   loading=true;showTyping();scrollDown();btnAssistente.classList.add("listening");
+
   try{
     const messages=chatHistory.map(m=>({role:m.role,content:m.content}));
     const res=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:buildSystem(),messages})
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key":API_KEY,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1024,
+        system:buildSystem(),
+        messages,
+        tools:[{type:"web_search_20250305",name:"web_search"}]
+      })
     });
     const data=await res.json();
     let reply="";
-    if(data.content)for(const b of data.content)if(b.type==="text")reply+=b.text;
+    if(data.content){
+      for(const b of data.content){
+        if(b.type==="text")reply+=b.text;
+      }
+    }
     if(!reply)reply=data.error?.message||"Non ho ricevuto risposta. Riprova.";
+
     const aiMsg={role:"assistant",content:reply,ts:Date.now()};
     chatHistory.push(aiMsg);LS.set("ass_chat",chatHistory.slice(-40));
     hideTyping();chatEl.appendChild(renderBubble(aiMsg));
     if(reply.includes("📅 APPUNTAMENTO RILEVATO:")){pendingEvent=reply;renderEventCard()}
-    if(reply.includes("🧠 APPRESO:")){const learned=reply.split("🧠 APPRESO:")[1].split("\n")[0].trim();if(learned){memoria.note_stile=[...memoria.note_stile.slice(-9),learned];memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria)}}
-    speak(reply);scrollDown();
+    if(reply.includes("🧠 APPRESO:")){
+      const learned=reply.split("🧠 APPRESO:")[1].split("\n")[0].trim();
+      if(learned){memoria.note_stile=[...memoria.note_stile.slice(-9),learned];memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria)}
+    }
+    speakNatural(reply);scrollDown();
   }catch(e){
     hideTyping();
     const errMsg={role:"assistant",content:"⚠️ Errore di connessione. Controlla la rete e riprova.",ts:Date.now()};
@@ -429,7 +451,15 @@ async function send(text){
   loading=false;btnAssistente.classList.remove("listening");
 }
 
-async function addToCalendar(){document.getElementById("event-card")?.remove();if(!pendingEvent)return;try{await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,system:"Crea l'evento su Google Calendar.",messages:[{role:"user",content:`Crea questo evento: ${pendingEvent}`}],mcp_servers:[{type:"url",url:"https://gcal.mcp.claude.com/mcp",name:"gcal"}]})});showToast("✅ Aggiunto al calendario!")}catch{showToast("Errore calendario","err")}pendingEvent=null}
+async function addToCalendar(){
+  document.getElementById("event-card")?.remove();
+  if(!pendingEvent)return;
+  try{
+    await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,system:"Crea l'evento su Google Calendar.",messages:[{role:"user",content:`Crea questo evento: ${pendingEvent}`}],mcp_servers:[{type:"url",url:"https://gcal.mcp.claude.com/mcp",name:"gcal"}]})});
+    showToast("✅ Aggiunto al calendario!");
+  }catch{showToast("Errore calendario","err")}
+  pendingEvent=null;
+}
 
 function startVoice(onResult,onEnd){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -482,11 +512,11 @@ function goToApiSetup(){
   memoria.nome=nome;memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria);
   hSub.textContent=`${nome} · Edilizia`;document.getElementById("menu-name").textContent=nome;
   setupEl.style.display="none";
-  if(!API_KEY){apiSetupEl.classList.add("show")}
-  else{startChat(nome)}
+  if(!API_KEY)apiSetupEl.classList.add("show");
+  else startChat(nome);
 }
 
-// API KEY SETUP
+// API KEY
 apiKeyInput.addEventListener("input",()=>apiBtnEl.disabled=!apiKeyInput.value.trim().startsWith("sk-ant"));
 apiBtnEl.addEventListener("click",()=>{
   const key=apiKeyInput.value.trim();if(!key)return;
@@ -497,12 +527,11 @@ apiBtnEl.addEventListener("click",()=>{
 
 function startChat(nome){
   if(chatHistory.length===0){
-    const w={role:"assistant",content:`Ciao ${nome}! 👋 Sono il tuo assistente personale.\n\nPremi il pulsante dorato A per parlarmi vocalmente.\nPremi 🔔 per un promemoria rapido.\nTutte le altre funzioni nel menu ☰ in alto a sinistra.\n\nCosa facciamo?`,ts:Date.now()};
+    const w={role:"assistant",content:`Ciao ${nome}! 👋 Sono il tuo assistente personale.\n\nPremi il pulsante dorato A per parlarmi vocalmente.\nPremi 🔔 per un promemoria rapido.\nOra posso anche cercare informazioni sul web — voli, prezzi, meteo e molto altro.\n\nCosa facciamo?`,ts:Date.now()};
     chatHistory.push(w);LS.set("ass_chat",chatHistory);chatEl.appendChild(renderBubble(w));scrollDown();
   }
 }
 
-// INIT
 function renderAll(){chatEl.innerHTML="";for(const msg of chatHistory)chatEl.appendChild(renderBubble(msg));if(pendingEvent)renderEventCard();scrollDown()}
 if(memoria.nome&&API_KEY){setupEl.style.display="none";hSub.textContent=`${memoria.nome} · Edilizia`;document.getElementById("menu-name").textContent=memoria.nome;renderAll()}
 else if(memoria.nome&&!API_KEY){setupEl.style.display="none";apiSetupEl.classList.add("show")}
