@@ -931,11 +931,31 @@ function startVoice(onResult,onEnd){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){showToast("Microfono non supportato","err");return}
   if(recog){recog.stop();recog=null}
-  recog=new SR();recog.lang="it-IT";recog.continuous=false;recog.interimResults=false;
-  recog.onresult=e=>onResult(e.results[0][0].transcript);
-  recog.onend=()=>{recog=null;if(onEnd)onEnd()};
-  recog.onerror=()=>{recog=null;showToast("Errore microfono","err");if(onEnd)onEnd()};
-  recog.start();
+  recog=new SR();
+  recog.lang="it-IT";
+  recog.continuous=false;
+  recog.interimResults=false;
+  recog.maxAlternatives=1;
+  let resultReceived=false;
+  recog.onresult=e=>{
+    resultReceived=true;
+    const text=e.results[0][0].transcript;
+    onResult(text);
+  };
+  recog.onend=()=>{
+    recog=null;
+    if(onEnd)onEnd();
+  };
+  recog.onerror=e=>{
+    recog=null;
+    // Se abbiamo già ricevuto un risultato ignora l'errore
+    if(resultReceived)return;
+    // Errori non critici — ignora silenziosamente
+    if(e.error==="no-speech"||e.error==="aborted"){}
+    else showToast("Errore microfono: "+e.error,"err");
+    if(onEnd)onEnd();
+  };
+  try{recog.start();}catch(e){recog=null;if(onEnd)onEnd();}
 }
 
 // ==================== TOAST ====================
