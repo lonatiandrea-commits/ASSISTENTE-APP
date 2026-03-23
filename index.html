@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Assistente"/>
 <title>Assistente Personale</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -468,65 +469,41 @@ function speakNatural(text){
   next();
 }
 
-// ==================== GOOGLE AUTH ====================
-function googleAuth(){
-  if(!GOOGLE_CLIENT_ID){showToast("Client ID mancante","err");return}
-  const params=new URLSearchParams({
+// ==================== GOOGLE AUTH (Google Identity Services) ====================
+let gisClient=null;
+
+function initGoogleAuth(){
+  if(!window.google||!GOOGLE_CLIENT_ID)return;
+  gisClient=window.google.accounts.oauth2.initTokenClient({
     client_id:GOOGLE_CLIENT_ID,
-    redirect_uri:"https://assistente-personale-sxil.vercel.app",
-    response_type:"token",
     scope:GOOGLE_SCOPES,
-    prompt:"consent"
-  });
-  const url="https://accounts.google.com/o/oauth2/v2/auth?"+params.toString();
-  // Apri popup OAuth
-  const popup=window.open(url,"google-auth","width=500,height=600,scrollbars=yes");
-  if(!popup){
-    // Fallback: redirect diretto se popup bloccato
-    window.location.href=url;
-    return;
-  }
-  // Polling: controlla quando il popup torna al nostro dominio
-  const check=setInterval(()=>{
-    try{
-      const hash=popup.location.hash;
-      if(hash&&hash.includes("access_token")){
-        clearInterval(check);
-        popup.close();
-        const p=new URLSearchParams(hash.slice(1));
-        const token=p.get("access_token");
-        if(token){
-          GOOGLE_TOKEN=token;
-          LS.set("ass_gtoken",token);
-          updateGoogleDots();
-          fetchGoogleEmail();
-          showToast("Google connesso!");
-          // Chiudi schermata setup se aperta
-          hideAllScreens();
-          document.getElementById("h-sub").textContent=`${memoria.nome} · Edilizia`;
-          if(chatHistory.length===0)addWelcome();else renderAll();
-        }
+    callback:(response)=>{
+      if(response.access_token){
+        GOOGLE_TOKEN=response.access_token;
+        LS.set("ass_gtoken",GOOGLE_TOKEN);
+        updateGoogleDots();
+        fetchGoogleEmail();
+        showToast("Google connesso!");
+        hideAllScreens();
+        document.getElementById("h-sub").textContent=`${memoria.nome} · Edilizia`;
+        document.getElementById("menu-name").textContent=memoria.nome;
+        if(chatHistory.length===0)addWelcome();else renderAll();
+      }else{
+        showToast("Accesso Google fallito","err");
       }
-    }catch(e){
-      // Cross-origin — popup ancora su Google, aspetta
     }
-    if(popup.closed){clearInterval(check);}
-  },500);
+  });
+}
+
+function googleAuth(){
+  if(!window.google){showToast("Caricamento Google in corso...","err");setTimeout(googleAuth,1000);return}
+  if(!gisClient)initGoogleAuth();
+  if(!gisClient){showToast("Errore inizializzazione Google","err");return}
+  gisClient.requestAccessToken({prompt:"consent"});
 }
 
 function handleOAuthCallback(){
-  // Gestisce il caso redirect (fallback)
-  const hash=window.location.hash;
-  if(!hash)return;
-  const params=new URLSearchParams(hash.slice(1));
-  const token=params.get("access_token");
-  if(!token)return;
-  GOOGLE_TOKEN=token;
-  LS.set("ass_gtoken",token);
-  window.history.replaceState({},document.title,window.location.pathname);
-  fetchGoogleEmail();
-  updateGoogleDots();
-  showToast("Google connesso!");
+  // Non serve più con GIS — lasciato per compatibilità
 }
 
 async function fetchGoogleEmail(){
@@ -1190,7 +1167,11 @@ document.getElementById("mem-save").addEventListener("click",()=>{memoria.nome=d
 function renderMemoria(){document.getElementById("note-label").textContent=`Note apprese (${memoria.note_stile.length})`;document.getElementById("mem-note-content").innerHTML=memoria.note_stile.length===0?'<div class="mem-empty">Crescerà con l\'uso</div>':memoria.note_stile.map(n=>`<span class="mem-tag">${n}</span>`).join("");document.getElementById("mem-clienti-content").innerHTML=memoria.clienti.length===0?'<div class="mem-empty">Menziona clienti nella chat</div>':memoria.clienti.map(c=>`<span class="mem-tag">${c}</span>`).join("");document.getElementById("mem-fornitori-content").innerHTML=memoria.fornitori.length===0?'<div class="mem-empty">Menziona fornitori nella chat</div>':memoria.fornitori.map(f=>`<span class="mem-tag">${f}</span>`).join("")}
 
 // START
-initApp();setTimeout(checkGeoPromemoria,1500);
+initApp();
+setTimeout(checkGeoPromemoria,1500);
+// Init Google Identity Services quando la libreria è carica
+window.addEventListener("load",()=>{if(window.google&&GOOGLE_CLIENT_ID)initGoogleAuth()});
+setTimeout(()=>{if(window.google&&GOOGLE_CLIENT_ID)initGoogleAuth()},2000);
 </script>
 </body>
 </html>
