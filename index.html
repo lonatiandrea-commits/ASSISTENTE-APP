@@ -934,28 +934,50 @@ function startVoice(onResult,onEnd){
   recog=new SR();
   recog.lang="it-IT";
   recog.continuous=false;
-  recog.interimResults=false;
-  recog.maxAlternatives=1;
-  let resultReceived=false;
+  recog.interimResults=true;
+  recog.maxAlternatives=3;
+  let finalText="";
+  let resultSent=false;
+  let silenceTimer=null;
+
+  function sendResult(text){
+    if(resultSent||!text.trim())return;
+    resultSent=true;
+    clearTimeout(silenceTimer);
+    recog?.stop();
+    onResult(text.trim());
+  }
+
   recog.onresult=e=>{
-    resultReceived=true;
-    const text=e.results[0][0].transcript;
-    onResult(text);
+    let interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal){finalText+=e.results[i][0].transcript;}
+      else{interim+=e.results[i][0].transcript;}
+    }
+    if(finalText){
+      // Testo finale — invia subito dopo breve pausa
+      clearTimeout(silenceTimer);
+      silenceTimer=setTimeout(()=>sendResult(finalText),600);
+    } else if(interim){
+      // Testo provvisorio — aspetta silenzio
+      clearTimeout(silenceTimer);
+      silenceTimer=setTimeout(()=>sendResult(interim),1500);
+    }
   };
   recog.onend=()=>{
+    clearTimeout(silenceTimer);
     recog=null;
+    if(!resultSent&&finalText.trim())sendResult(finalText);
     if(onEnd)onEnd();
   };
   recog.onerror=e=>{
+    clearTimeout(silenceTimer);
     recog=null;
-    // Se abbiamo già ricevuto un risultato ignora l'errore
-    if(resultReceived)return;
-    // Errori non critici — ignora silenziosamente
     if(e.error==="no-speech"||e.error==="aborted"){}
-    else showToast("Errore microfono: "+e.error,"err");
+    else if(e.error==="not-allowed")showToast("Permesso microfono negato","err");
     if(onEnd)onEnd();
   };
-  try{recog.start();}catch(e){recog=null;if(onEnd)onEnd();}
+  try{recog.start();}catch(e){recog=null;showToast("Errore avvio microfono","err");if(onEnd)onEnd();}
 }
 
 // ==================== TOAST ====================
