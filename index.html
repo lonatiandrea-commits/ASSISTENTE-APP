@@ -253,6 +253,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   <div class="menu-integrations">
     <div class="int-badge" id="badge-gmail" onclick="checkGoogleAuth('gmail')">Gmail</div>
     <div class="int-badge" id="badge-cal" onclick="checkGoogleAuth('cal')">Calendar</div>
+    <div class="int-badge" id="badge-drive" onclick="checkGoogleAuth('drive')">Drive</div>
+    <div class="int-badge" id="badge-sheets" onclick="checkGoogleAuth('sheets')">Sheets</div>
     <div class="int-badge connected">WhatsApp</div>
   </div>
   <div class="menu-section-label">Azioni rapide</div>
@@ -264,7 +266,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   <button class="menu-item" data-prompt="Manda un WhatsApp a "><div class="menu-item-icon mi-wa">💬</div><div><div class="menu-item-label">WhatsApp</div><div class="menu-item-desc">Prepara e invia</div></div></button>
   <button class="menu-item" data-prompt="Crea un preventivo per "><div class="menu-item-icon mi-gold">📋</div><div><div class="menu-item-label">Preventivo</div><div class="menu-item-desc">Genera offerta</div></div></button>
   <button class="menu-item" data-prompt="Crea un documento: "><div class="menu-item-icon mi-teal">✒️</div><div><div class="menu-item-label">Documento</div><div class="menu-item-desc">Rapporto, lettera, nota</div></div></button>
-  <button class="menu-item" data-prompt="Cerca volo da "><div class="menu-item-icon mi-slate">✈️</div><div><div class="menu-item-label">Volo</div><div class="menu-item-desc">Cerca prezzi e orari</div></div></button>
+  <button class="menu-item" data-prompt="Salva su Drive: "><div class="menu-item-icon mi-blue">💾</div><div><div class="menu-item-label">Salva su Drive</div><div class="menu-item-desc">Documenti e preventivi</div></div></button>
+  <button class="menu-item" data-prompt="Cerca su Drive: "><div class="menu-item-icon mi-blue">🔎</div><div><div class="menu-item-label">Cerca su Drive</div><div class="menu-item-desc">Trova file esistenti</div></div></button>
+  <button class="menu-item" data-prompt="Crea un foglio Excel per "><div class="menu-item-icon mi-teal">📊</div><div><div class="menu-item-label">Crea Foglio</div><div class="menu-item-desc">Preventivo, registro, lista</div></div></button>
   <div class="menu-divider"></div>
   <div class="menu-section-label">Impostazioni</div>
   <button class="menu-item" id="menu-memoria"><div class="menu-item-icon mi-gold">🧠</div><div><div class="menu-item-label">Memoria</div><div class="menu-item-desc">Cosa ho imparato</div></div></button>
@@ -400,7 +404,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 // Google OAuth — inserisci il tuo Client ID dopo aver configurato Google Cloud Console
 // Istruzioni: console.cloud.google.com → Credenziali → OAuth 2.0 → Tipo: Web → URI autorizzati: https://lonatiandrea-commits.github.io
 const GOOGLE_CLIENT_ID = "85726060740-9bmumiaiidffnvbp6np2ke1l563chcma.apps.googleusercontent.com";
-const GOOGLE_SCOPES = "https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar";
+const GOOGLE_SCOPES = "https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
 
 // ==================== STORAGE ====================
 const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
@@ -510,6 +514,8 @@ function updateGoogleDots(){
   document.getElementById("cal-dot").classList.toggle("active",connected);
   document.getElementById("badge-gmail").classList.toggle("connected",connected);
   document.getElementById("badge-cal").classList.toggle("connected",connected);
+  document.getElementById("badge-drive").classList.toggle("connected",connected);
+  document.getElementById("badge-sheets").classList.toggle("connected",connected);
 }
 
 function checkGoogleAuth(type){
@@ -604,7 +610,69 @@ async function calFindFreeSlots(durationMinutes=60){
   return slots;
 }
 
-// ==================== WHATSAPP ====================
+// ==================== DRIVE API ====================
+async function driveSaveFile(nome, contenuto, mimeType="text/plain"){
+  if(!GOOGLE_TOKEN){showToast("Collega prima Google","err");return null}
+  try{
+    const meta={name:nome,mimeType};
+    const form=new FormData();
+    form.append("metadata",new Blob([JSON.stringify(meta)],{type:"application/json"}));
+    form.append("file",new Blob([contenuto],{type:mimeType}));
+    const r=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",{
+      method:"POST",headers:{Authorization:"Bearer "+GOOGLE_TOKEN},body:form
+    });
+    const d=await r.json();
+    return d.id?`https://drive.google.com/file/d/${d.id}/view`:null;
+  }catch{return null}
+}
+
+async function driveSearch(query){
+  if(!GOOGLE_TOKEN){return null}
+  try{
+    const q=encodeURIComponent(`name contains '${query}' and trashed=false`);
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,modifiedTime,webViewLink)&pageSize=5`,{
+      headers:{Authorization:"Bearer "+GOOGLE_TOKEN}
+    });
+    const d=await r.json();
+    return d.files||[];
+  }catch{return null}
+}
+
+// ==================== SHEETS API ====================
+async function sheetsCreate(titolo, dati){
+  if(!GOOGLE_TOKEN){showToast("Collega prima Google","err");return null}
+  try{
+    // Crea il foglio
+    const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets",{
+      method:"POST",
+      headers:{Authorization:"Bearer "+GOOGLE_TOKEN,"Content-Type":"application/json"},
+      body:JSON.stringify({properties:{title:titolo}})
+    });
+    const sheet=await r.json();
+    if(!sheet.spreadsheetId)return null;
+    // Inserisci i dati se presenti
+    if(dati&&dati.length>0){
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheet.spreadsheetId}/values/Sheet1!A1:append?valueInputOption=RAW`,{
+        method:"POST",
+        headers:{Authorization:"Bearer "+GOOGLE_TOKEN,"Content-Type":"application/json"},
+        body:JSON.stringify({values:dati})
+      });
+    }
+    return sheet.spreadsheetUrl||`https://docs.google.com/spreadsheets/d/${sheet.spreadsheetId}`;
+  }catch{return null}
+}
+
+async function sheetsAppend(spreadsheetId, riga){
+  if(!GOOGLE_TOKEN)return false;
+  try{
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:append?valueInputOption=RAW`,{
+      method:"POST",
+      headers:{Authorization:"Bearer "+GOOGLE_TOKEN,"Content-Type":"application/json"},
+      body:JSON.stringify({values:[riga]})
+    });
+    return true;
+  }catch{return false}
+}
 function whatsappSend(phone,message){
   const cleaned=phone.replace(/\D/g,"");
   const url=`https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
@@ -624,7 +692,9 @@ CAPACITA':
 - Gmail: leggi, scrivi, invia email (quando Google connesso)
 - Calendar: crea/modifica eventi, leggi agenda, trova slot liberi
 - WhatsApp: prepara messaggi da inviare con un tap
-- Voli/treni: cerca e fornisce link diretti Skyscanner/Trenitalia
+- Google Drive: salva documenti, cerca file esistenti ("trova il preventivo Rossi")
+- Google Sheets: crea fogli per preventivi, registri fornitori, rapporti cantiere
+- Quando salvi su Drive o Sheets, termina con: 💾 SALVA DRIVE: [nome file]|[contenuto] oppure 📊 CREA SHEET: [titolo]|[righe CSV]
 
 FORMATI RISPOSTA:
 - Email da inviare → 📧 EMAIL:\nA: [destinatario]\nOGGETTO: [x]\n---\n[testo]
@@ -784,8 +854,43 @@ async function send(text){
       const toM=reply.match(/A:\s*(.+)/);const msgM=reply.split("---\n")[1]?.split("\n🧠")[0]?.trim();
       if(toM&&msgM)showWhatsAppCard(toM[1].trim(),msgM);
     }
-    // Learn
-    if(reply.includes("🧠 APPRESO:")){const learned=reply.split("🧠 APPRESO:")[1].split("\n")[0].trim();if(learned){memoria.note_stile=[...memoria.note_stile.slice(-9),learned];memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria)}}
+    // Parse Drive save
+    if(reply.includes("💾 SALVA DRIVE:")){
+      const parts=reply.split("💾 SALVA DRIVE:")[1].split("\n")[0].split("|");
+      const nomeFile=parts[0]?.trim();const contenuto=parts[1]?.trim()||reply;
+      if(nomeFile){
+        const url=await driveSaveFile(nomeFile,contenuto);
+        if(url){
+          const linkMsg={role:"assistant",content:`💾 Salvato su Drive!\nClicca per aprire: ${url}`,ts:Date.now()};
+          chatHistory.push(linkMsg);chatEl.appendChild(renderBubble(linkMsg));
+          showToast("Salvato su Drive!");
+        }
+      }
+    }
+    // Parse Sheets create
+    if(reply.includes("📊 CREA SHEET:")){
+      const parts=reply.split("📊 CREA SHEET:")[1].split("\n")[0].split("|");
+      const titolo=parts[0]?.trim();const csvRaw=parts[1]?.trim();
+      if(titolo){
+        const righe=csvRaw?csvRaw.split(";").map(r=>r.split(",")):[[]];
+        const url=await sheetsCreate(titolo,righe);
+        if(url){
+          const linkMsg={role:"assistant",content:`📊 Foglio creato su Google Sheets!\nClicca per aprire: ${url}`,ts:Date.now()};
+          chatHistory.push(linkMsg);chatEl.appendChild(renderBubble(linkMsg));
+          showToast("Foglio creato!");
+        }
+      }
+    }
+    // Parse Drive search
+    if(reply.includes("🔎 CERCA DRIVE:")){
+      const query=reply.split("🔎 CERCA DRIVE:")[1].split("\n")[0].trim();
+      const files=await driveSearch(query);
+      if(files&&files.length>0){
+        const lista=files.map(f=>`📄 ${f.name}`).join("\n");
+        const searchMsg={role:"assistant",content:`File trovati su Drive:\n${lista}`,ts:Date.now()};
+        chatHistory.push(searchMsg);chatEl.appendChild(renderBubble(searchMsg));
+      }
+    }{const learned=reply.split("🧠 APPRESO:")[1].split("\n")[0].trim();if(learned){memoria.note_stile=[...memoria.note_stile.slice(-9),learned];memoria.ultima_modifica=Date.now();LS.set("ass_memoria",memoria)}}
 
     speakNatural(reply);scrollDown();
   }catch(e){
