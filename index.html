@@ -297,6 +297,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
   <div class="h-right">
     <span class="cdot" id="cd-g" title="Gmail"></span>
     <span class="cdot" id="cd-c" title="Calendar"></span>
+    <button class="ibtn" id="stop-tts" title="Stop voce" style="display:none">⏹</button>
     <button class="ibtn" id="kb-toggle">⌨️</button>
   </div>
 </header>
@@ -411,14 +412,10 @@ let loading=false,speaking=true,recog=null,kbOpen=false;
 let voice=null,gisClient=null;
 let prems=S.get("prems")||[];
 
-// ===== VOICE =====
+// ===== VOICE INIT (fallback) =====
 function initVoice(){
   if(!window.speechSynthesis)return;
-  const pick=()=>{
-    const all=window.speechSynthesis.getVoices();
-    const it=all.filter(v=>v.lang.startsWith("it"));
-    voice=it.find(v=>/google/i.test(v.name)&&/giulia|alice|paola|sara|laura|sofia/i.test(v.name))||it.find(v=>/giulia|alice|paola|sara|laura|sofia/i.test(v.name))||it.find(v=>/google/i.test(v.name))||it[0]||null;
-  };
+  const pick=()=>{const all=window.speechSynthesis.getVoices();const it=all.filter(v=>v.lang.startsWith("it"));voice=it.find(v=>/google/i.test(v.name)&&/giulia|alice|paola|sara|laura|sofia/i.test(v.name))||it.find(v=>/giulia|alice|paola|sara|laura|sofia/i.test(v.name))||it.find(v=>/google/i.test(v.name))||it[0]||null;};
   pick();window.speechSynthesis.onvoiceschanged=pick;
 }
 initVoice();
@@ -436,15 +433,58 @@ function cleanTTS(t){
     .replace(/\s{2,}/g," ").replace(/,\s*,/g,",").replace(/\.\s*\./g,".").trim();
 }
 
-function tts(text){
-  if(!speaking||!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  const clean=cleanTTS(text).slice(0,480);
+// ===== GOOGLE CLOUD TTS (Wavenet) =====
+let ttsAudio=null;
+let ttsPlaying=false;
+
+function stopTTS(){
+  if(ttsAudio){ttsAudio.pause();ttsAudio.currentTime=0;ttsAudio=null;}
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+  ttsPlaying=false;
+  document.getElementById("stop-tts").style.display="none";
+}
+
+async function tts(text){
+  if(!speaking)return;
+  stopTTS();
+  const clean=cleanTTS(text).slice(0,500);
   if(!clean)return;
-  const sents=clean.split(/(?<=[.!?])\s+/).flatMap(s=>s.length>120?s.split(/(?<=,)\s+(?=\w{5,})/):s).map(s=>s.trim()).filter(s=>s.length>3);
-  let i=0;
+
+  // Prova Google Cloud TTS se abbiamo token Google
+  if(GTOK){
+    try{
+      const res=await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+GTOK},
+        body:JSON.stringify({
+          input:{text:clean},
+          voice:{languageCode:"it-IT",name:"it-IT-Wavenet-A",ssmlGender:"FEMALE"},
+          audioConfig:{audioEncoding:"MP3",speakingRate:1.05,pitch:1.0}
+        })
+      });
+      const data=await res.json();
+      if(data.audioContent){
+        const audio=new Audio("data:audio/mp3;base64,"+data.audioContent);
+        ttsAudio=audio;ttsPlaying=true;
+        document.getElementById("stop-tts").style.display="inline-block";
+        audio.onended=()=>{ttsPlaying=false;document.getElementById("stop-tts").style.display="none";ttsAudio=null;};
+        audio.onerror=()=>{ttsPlaying=false;document.getElementById("stop-tts").style.display="none";ttsAudio=null;ttsFallback(clean);};
+        audio.play();
+        return;
+      }
+    }catch(e){/* fallback */}
+  }
+  // Fallback browser TTS
+  ttsFallback(clean);
+}
+
+function ttsFallback(text){
+  if(!window.speechSynthesis)return;
+  const sents=text.split(/(?<=[.!?])\s+/).flatMap(s=>s.length>120?s.split(/(?<=,)\s+(?=\w{5,})/):s).map(s=>s.trim()).filter(s=>s.length>3);
+  let i=0;ttsPlaying=true;
+  document.getElementById("stop-tts").style.display="inline-block";
   function next(){
-    if(i>=sents.length)return;
+    if(i>=sents.length||!ttsPlaying){document.getElementById("stop-tts").style.display="none";return;}
     const u=new SpeechSynthesisUtterance(sents[i]);
     u.lang="it-IT";u.rate=0.93;u.pitch=1.1;u.volume=1;
     if(voice)u.voice=voice;
@@ -514,13 +554,47 @@ async function gmailInbox(){
   }catch{return null}
 }
 
-async function gmailSend(to,subject,body){
+async function checkToken(){
+  // Se token scaduto o assente, richiedi nuovo silenziosamente
   if(!GTOK)return false;
   try{
-    const raw=btoa(`To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-    const r=await fetch("https://www.googleapis.com/gmail/v1/users/me/messages/send",{method:"POST",headers:{Authorization:"Bearer "+GTOK,"Content-Type":"application/json"},body:JSON.stringify({raw})});
-    return r.ok;
+    const r=await fetch("https://www.googleapis.com/gmail/v1/users/me/profile",{headers:{Authorization:"Bearer "+GTOK}});
+    if(r.status===401){
+      // Token scaduto — richiedi nuovo
+      return new Promise(resolve=>{
+        if(!gisClient){resolve(false);return}
+        gisClient.requestAccessToken({prompt:""});
+        // Aspetta 3s per il nuovo token
+        setTimeout(()=>resolve(!!GTOK),3000);
+      });
+    }
+    return true;
   }catch{return false}
+}
+
+async function gmailSend(to,subject,body){
+  if(!GTOK){showToast("Collega prima Gmail","err");return false}
+  const ok=await checkToken();
+  if(!ok){showToast("Riconnetti Google dal menu","err");return false}
+  try{
+    // Encoding corretto per caratteri italiani
+    const email=[
+      `To: ${to}`,
+      `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
+      `Content-Type: text/plain; charset=UTF-8`,
+      `Content-Transfer-Encoding: base64`,
+      ``,
+      btoa(unescape(encodeURIComponent(body)))
+    ].join("\r\n");
+    const raw=btoa(email).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    const r=await fetch("https://www.googleapis.com/gmail/v1/users/me/messages/send",{
+      method:"POST",
+      headers:{Authorization:"Bearer "+GTOK,"Content-Type":"application/json"},
+      body:JSON.stringify({raw})
+    });
+    if(!r.ok){const err=await r.json();console.error("Gmail error:",err);return false}
+    return true;
+  }catch(e){console.error("Gmail send error:",e);return false}
 }
 
 // ===== CALENDAR =====
@@ -535,13 +609,37 @@ async function calEvents(){
 }
 
 async function calCreate(title,dateStr,timeStr,dur=60){
-  if(!GTOK)return false;
+  if(!GTOK){showToast("Collega prima Calendar","err");return false}
+  await checkToken();
   try{
-    const start=new Date(`${dateStr}T${timeStr||"09:00"}:00`);
+    // Normalizza data — accetta YYYY-MM-DD o formati italiani
+    let dateNorm=dateStr;
+    // Se formato italiano DD/MM/YYYY o DD-MM-YYYY
+    const itDate=dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if(itDate)dateNorm=`${itDate[3]}-${itDate[2].padStart(2,"0")}-${itDate[1].padStart(2,"0")}`;
+    // Se formato "25 marzo 2026" ecc
+    const mesi={gennaio:"01",febbraio:"02",marzo:"03",aprile:"04",maggio:"05",giugno:"06",luglio:"07",agosto:"08",settembre:"09",ottobre:"10",novembre:"11",dicembre:"12"};
+    const verbDate=dateStr.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/i);
+    if(verbDate&&mesi[verbDate[2].toLowerCase()])dateNorm=`${verbDate[3]}-${mesi[verbDate[2].toLowerCase()]}-${verbDate[1].padStart(2,"0")}`;
+    // Normalizza ora — accetta HH:MM o "ore 10" ecc
+    let timeNorm=timeStr||"09:00";
+    const oreMatch=(timeStr||"").match(/(\d{1,2})(?::(\d{2}))?/);
+    if(oreMatch)timeNorm=`${oreMatch[1].padStart(2,"0")}:${(oreMatch[2]||"00").padStart(2,"0")}`;
+    const start=new Date(`${dateNorm}T${timeNorm}:00`);
+    if(isNaN(start.getTime())){showToast("Data non valida","err");return false}
     const end=new Date(start.getTime()+dur*60000);
-    const r=await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events",{method:"POST",headers:{Authorization:"Bearer "+GTOK,"Content-Type":"application/json"},body:JSON.stringify({summary:title,start:{dateTime:start.toISOString(),timeZone:"Europe/Rome"},end:{dateTime:end.toISOString(),timeZone:"Europe/Rome"}})});
-    return r.ok;
-  }catch{return false}
+    const r=await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events",{
+      method:"POST",
+      headers:{Authorization:"Bearer "+GTOK,"Content-Type":"application/json"},
+      body:JSON.stringify({
+        summary:title,
+        start:{dateTime:start.toISOString(),timeZone:"Europe/Rome"},
+        end:{dateTime:end.toISOString(),timeZone:"Europe/Rome"}
+      })
+    });
+    if(!r.ok){const err=await r.json();console.error("Calendar error:",err);return false}
+    return true;
+  }catch(e){console.error("Calendar create error:",e);return false}
 }
 
 async function calFreeSlots(mins=60){
@@ -791,8 +889,9 @@ async function showInbox(){
 }
 
 // ===== PROMEMORIA =====
-function savePrem(){S.set("prems",prems)}
 
+
+function savePrem(){S.set("prems",prems)}
 function showPStep(id){["ps1","ps-cal","ps-ora","ps-geo"].forEach(s=>document.getElementById(s).style.display=s===id?"block":"none")}
 
 function showAlert(icon,title,body){
@@ -864,13 +963,18 @@ document.getElementById("b-skip").addEventListener("click",()=>{
   if(hist.length===0)addWelcome();else renderAll();
 });
 
-// Big buttons
+// Stop TTS button
+document.getElementById("stop-tts").addEventListener("click",stopTTS);
+
+// Big buttons — stop TTS automaticamente
 document.getElementById("bb-a").addEventListener("click",()=>{
+  stopTTS();
   if(loading)return;
   document.getElementById("bb-a").classList.add("listening");
   startVoice(t=>send(t),()=>document.getElementById("bb-a").classList.remove("listening"));
 });
 document.getElementById("bb-p").addEventListener("click",()=>{
+  stopTTS();
   document.getElementById("pmod").classList.add("open");
   showPStep("ps1");
   document.getElementById("pt-date").value=new Date().toISOString().split("T")[0];
@@ -926,22 +1030,97 @@ function renderMem(){
   document.getElementById("fc").innerHTML=mem.fornitori.length?mem.fornitori.map(f=>`<span class="mtag">${f}</span>`).join(""):`<div class="mem-empty">Menziona fornitori nella chat</div>`;
 }
 
-// Promemoria
+// Promemoria — dialogo vocale guidato
 document.getElementById("p-canc").addEventListener("click",()=>document.getElementById("pmod").classList.remove("open"));
 document.getElementById("pmod").addEventListener("click",e=>{if(e.target===document.getElementById("pmod"))document.getElementById("pmod").classList.remove("open")});
-document.getElementById("pt-cal").addEventListener("click",()=>showPStep("ps-cal"));
-document.getElementById("pt-ora").addEventListener("click",()=>{showPStep("ps-ora");if("Notification"in window&&Notification.permission==="default")Notification.requestPermission()});
-document.getElementById("pt-geo").addEventListener("click",()=>showPStep("ps-geo"));
-["cal","ora","geo"].forEach(t=>{
-  document.getElementById(`pb-${t}`).addEventListener("click",()=>showPStep("ps1"));
-  document.getElementById(`pm-${t}`).addEventListener("click",()=>{
-    const b=document.getElementById(`pm-${t}`);b.innerHTML="Ascolto...";
-    startVoice(tx=>{
-      if(t==="geo"){const m=tx.match(/quando.*(?:a|al|alla)\s+([^,]+)(?:,|\s+ricordami\s+di\s+)(.*)/i);if(m){document.getElementById("pg-place").value=m[1].trim();document.getElementById("pi-geo").value=m[2].trim();}else document.getElementById("pi-geo").value=tx;}
-      else document.getElementById(`pi-${t}`).value=tx;
-      checkPSend(t);b.innerHTML="🎤&nbsp; Parla";
-    },()=>b.innerHTML="🎤&nbsp; Parla");
-  });
+
+// Scegli tipo
+document.getElementById("pt-cal").addEventListener("click",()=>startVoiceDialog("cal"));
+document.getElementById("pt-ora").addEventListener("click",()=>startVoiceDialog("ora"));
+document.getElementById("pt-geo").addEventListener("click",()=>startVoiceDialog("geo"));
+["cal","ora","geo"].forEach(t=>document.getElementById(`pb-${t}`).addEventListener("click",()=>showPStep("ps1")));
+
+// Dialogo vocale guidato
+function askVoice(domanda, callback){
+  tts(domanda);
+  // Attendi 1.5s che finisca di parlare poi ascolta
+  setTimeout(()=>{
+    startVoice(risposta=>{callback(risposta)},()=>{});
+  },1800);
+}
+
+function startVoiceDialog(tipo){
+  if(tipo==="geo"){
+    showPStep("ps-geo");
+    // Chiedi luogo
+    setTimeout(()=>{
+      askVoice("In quale luogo devo ricordartelo?", luogo=>{
+        document.getElementById("pg-place").value=luogo;
+        // Chiedi cosa
+        setTimeout(()=>{
+          askVoice("Cosa devo ricordarti quando sei lì?", cosa=>{
+            document.getElementById("pi-geo").value=cosa;
+            checkPSend("geo");
+            // Conferma vocale
+            tts(`Perfetto. Ti ricorderò di ${cosa} quando sei a ${luogo}.`);
+          });
+        },500);
+      });
+    },300);
+  } else if(tipo==="ora"){
+    showPStep("ps-ora");
+    if("Notification"in window&&Notification.permission==="default")Notification.requestPermission();
+    setTimeout(()=>{
+      askVoice("Cosa devo ricordarti?", cosa=>{
+        document.getElementById("pi-ora").value=cosa;
+        setTimeout(()=>{
+          askVoice("A che ora? Dimmi ora e data, ad esempio: stasera alle dieci, o domani alle nove.", oraData=>{
+            // Parsing naturale ora/data
+            const now=new Date();
+            let data=now.toISOString().split("T")[0];
+            let ora="09:00";
+            // Stasera/oggi
+            if(/stasera|oggi/i.test(oraData))data=now.toISOString().split("T")[0];
+            // Domani
+            if(/domani/i.test(oraData)){const d=new Date(now.getTime()+86400000);data=d.toISOString().split("T")[0];}
+            // Ora numerica
+            const oreM=oraData.match(/(?:alle\s+)?(\d{1,2})(?::(\d{2}))?/);
+            if(oreM)ora=`${oreM[1].padStart(2,"0")}:${(oreM[2]||"00").padStart(2,"0")}`;
+            document.getElementById("pt-time").value=ora;
+            document.getElementById("pt-date").value=data;
+            checkPSend("ora");
+            tts(`Perfetto. Ti ricorderò di ${cosa} alle ${ora}.`);
+          });
+        },500);
+      });
+    },300);
+  } else if(tipo==="cal"){
+    showPStep("ps-cal");
+    setTimeout(()=>{
+      askVoice("Di che appuntamento si tratta?", cosa=>{
+        document.getElementById("pi-cal").value=cosa;
+        checkPSend("cal");
+        tts(`Appuntamento: ${cosa}. Premi il pulsante per aggiungerlo al calendario.`);
+      });
+    },300);
+  }
+}
+
+// Pulsanti mic manuali (backup se preferisce digitare)
+document.getElementById("pm-cal").addEventListener("click",()=>{const b=document.getElementById("pm-cal");b.innerHTML="Ascolto...";startVoice(tx=>{document.getElementById("pi-cal").value=tx;checkPSend("cal");b.innerHTML="🎤&nbsp; Parla"},()=>b.innerHTML="🎤&nbsp; Parla")});
+document.getElementById("pm-ora").addEventListener("click",()=>{const b=document.getElementById("pm-ora");b.innerHTML="Ascolto...";startVoice(tx=>{document.getElementById("pi-ora").value=tx;checkPSend("ora");b.innerHTML="🎤&nbsp; Parla"},()=>b.innerHTML="🎤&nbsp; Parla")});
+document.getElementById("pm-geo").addEventListener("click",()=>{
+  const b=document.getElementById("pm-geo");b.innerHTML="Ascolto...";
+  startVoice(tx=>{
+    const m1=tx.match(/quando\s+(?:sono\s+)?(?:a|al|alla|allo|ai|agli|alle)\s+([^,]+?)(?:\s+ricordami\s+di\s+|\s+compra\s+|\s+prendi\s+|\s+devo\s+)(.+)/i);
+    const m2=tx.match(/ricordami\s+di\s+(.+?)\s+quando\s+(?:sono\s+)?(?:a|al|alla|allo|ai|agli|alle)\s+(.+)/i);
+    const m3=tx.match(/^(?:a|al|alla|allo|ai|agli|alle)\s+([^,]+?)\s+(?:ricordami\s+di\s+|devo\s+|compra\s+|prendi\s+)(.+)/i);
+    if(m1){document.getElementById("pg-place").value=m1[1].trim();document.getElementById("pi-geo").value=m1[2].trim();}
+    else if(m2){document.getElementById("pi-geo").value=m2[1].trim();document.getElementById("pg-place").value=m2[2].trim();}
+    else if(m3){document.getElementById("pg-place").value=m3[1].trim();document.getElementById("pi-geo").value=m3[2].trim();}
+    else document.getElementById("pi-geo").value=tx;
+    checkPSend("geo");b.innerHTML="🎤&nbsp; Parla";
+  },()=>b.innerHTML="🎤&nbsp; Parla");
 });
 ["cal","ora"].forEach(t=>document.getElementById(`pi-${t}`).addEventListener("input",()=>checkPSend(t)));
 ["geo"].forEach(t=>{document.getElementById("pi-geo").addEventListener("input",()=>checkPSend(t));document.getElementById("pg-place").addEventListener("input",()=>checkPSend(t))});
