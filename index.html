@@ -394,7 +394,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
 <script>
 // ===== CONFIG =====
 const GCID="85726060740-ps5f9v9canq12vd41993jpm1ahfhu8hr.apps.googleusercontent.com";
-const GSCOPES="https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets";
+const GSCOPES="https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/contacts.readonly";
 
 // ===== STORAGE =====
 const S={
@@ -597,7 +597,45 @@ async function gmailSend(to,subject,body){
   }catch(e){console.error("Gmail send error:",e);return false}
 }
 
-// ===== CALENDAR =====
+// ===== PEOPLE API — cerca contatti =====
+let contactsCache=null;
+
+async function searchContact(name){
+  if(!GTOK)return null;
+  try{
+    // Carica contatti se non in cache
+    if(!contactsCache){
+      const r=await fetch("https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses&pageSize=500",{
+        headers:{Authorization:"Bearer "+GTOK}
+      });
+      const d=await r.json();
+      contactsCache=d.connections||[];
+    }
+    // Cerca per nome
+    const lower=name.toLowerCase().trim();
+    const found=contactsCache.find(c=>{
+      const names=c.names||[];
+      return names.some(n=>
+        n.displayName?.toLowerCase().includes(lower)||
+        n.givenName?.toLowerCase().includes(lower)||
+        n.familyName?.toLowerCase().includes(lower)
+      );
+    });
+    if(found){
+      const emails=found.emailAddresses||[];
+      return emails[0]?.value||null;
+    }
+    return null;
+  }catch(e){return null}
+}
+
+async function resolveEmail(nameOrEmail){
+  // Se è già un'email valida, usala direttamente
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nameOrEmail))return nameOrEmail;
+  // Altrimenti cerca nei contatti
+  const found=await searchContact(nameOrEmail);
+  return found;
+}
 async function calEvents(){
   if(!GTOK)return null;
   try{
@@ -696,7 +734,9 @@ Note: ${mem.note.join("; ")||"nessuna"} | Clienti: ${mem.clienti.join(", ")||"ne
 Google: ${GTOK?"CONNESSO — Gmail, Calendar, Drive, Sheets attivi":"non connesso"}
 ${ctx}
 
-CAPACITA': web search real-time, Gmail, Calendar, Drive, Sheets, WhatsApp, voli/treni
+CAPACITA': web search real-time, Gmail+Contatti Google, Calendar, Drive, Sheets, WhatsApp, voli/treni
+
+IMPORTANTE PER EMAIL: Quando scrivi un'email usa SEMPRE il nome della persona come destinatario (es. "A: Mario Rossi") — il sistema troverà automaticamente la sua email dai contatti Google. NON chiedere mai l'indirizzo email all'utente se hai il nome.
 
 FORMATI:
 - Email → 📧 EMAIL:\nA: [dest]\nOGGETTO: [x]\n---\n[testo]
@@ -759,8 +799,20 @@ let pendingEmail=null,pendingCal=null,pendingWA=null;
 
 async function doSendEmail(){
   if(!pendingEmail)return;
+  showToast("Cerco contatto...");
+  // Risolvi email dal nome se necessario
+  const resolvedTo=await resolveEmail(pendingEmail.to);
+  if(!resolvedTo){
+    showToast("Contatto non trovato — inserisci email manualmente","err");
+    // Chiedi email manualmente
+    const email=prompt(`Email di ${pendingEmail.to}:`);
+    if(!email)return;
+    pendingEmail.to=email;
+  } else {
+    pendingEmail.to=resolvedTo;
+  }
   const ok=await gmailSend(pendingEmail.to,pendingEmail.subject,pendingEmail.body);
-  showToast(ok?"Email inviata!":"Errore invio",ok?"ok":"err");
+  showToast(ok?"✅ Email inviata!":"Errore invio — riconnetti Google",ok?"ok":"err");
   pendingEmail=null;
 }
 async function doAddCal(){
