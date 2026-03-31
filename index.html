@@ -230,21 +230,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:13p
   </div>
 </div>
 
-<!-- SETUP GOOGLE -->
-<div id="s-google" class="screen">
-  <div class="sc">
-    <div class="badge">PASSO 2 DI 2</div>
-    <div class="sc-logo" style="font-size:32px">🔗</div>
-    <h2 class="sc-title">Collega Google</h2>
-    <p class="sc-sub">Gmail, Calendar, Drive e Sheets.<br/>Puoi saltare e farlo dopo dal menu.</p>
-    <button class="btn-google-style" id="b-google">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-      Accedi con Google
-    </button>
-    <button class="btn-gray" id="b-skip">Salta per ora →</button>
-    <p class="sc-note">Puoi collegare Google in qualsiasi momento</p>
-  </div>
-</div>
+<!-- SETUP GOOGLE - rimosso, ora usa MCP Anthropic -->
+
 
 <!-- MENU -->
 <div id="ov"></div>
@@ -537,20 +524,25 @@ function updateDots(){
 
 // ===== GMAIL =====
 async function gmailInbox(){
-  if(!GTOK)return null;
   try{
-    const r=await fetch("https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10&labelIds=INBOX&labelIds=UNREAD",{headers:{Authorization:"Bearer "+GTOK}});
-    const d=await r.json();
-    if(!d.messages)return[];
-    const emails=[];
-    for(const m of d.messages.slice(0,5)){
-      const mr=await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,{headers:{Authorization:"Bearer "+GTOK}});
-      const md=await mr.json();
-      const hdr=md.payload?.headers||[];
-      const g=n=>hdr.find(h=>h.name===n)?.value||"";
-      emails.push({id:m.id,from:g("From"),subject:g("Subject"),date:g("Date"),snippet:md.snippet||""});
-    }
-    return emails;
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        system:"Leggi le ultime 5 email non lette dalla inbox Gmail. Restituisci un JSON array con oggetti {from, subject, snippet, date}. Solo JSON, niente altro.",
+        messages:[{role:"user",content:"Leggi ultime 5 email non lette"}],
+        mcp_servers:[{type:"url",url:"https://gmail.mcp.claude.com/mcp",name:"gmail"}]
+      })
+    });
+    const data=await res.json();
+    let text="";
+    if(data.content)for(const b of data.content)if(b.type==="text")text+=b.text;
+    try{
+      const clean=text.replace(/```json|```/g,"").trim();
+      return JSON.parse(clean);
+    }catch{return[]}
   }catch{return null}
 }
 
@@ -583,42 +575,23 @@ async function checkToken(){
 }
 
 async function gmailSend(to,subject,body){
-  // Usa Anthropic API con MCP Gmail — non richiede token OAuth separato
   try{
     const res=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "x-api-key":KEY,
-        "anthropic-version":"2023-06-01",
-        "anthropic-dangerous-direct-browser-access":"true"
-      },
+      headers:{"Content-Type":"application/json","x-api-key":KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({
         model:"claude-sonnet-4-20250514",
-        max_tokens:500,
-        system:"Invia l'email tramite Gmail MCP. Usa il tool send_email con i parametri forniti. Rispondi solo con 'OK' se inviata.",
-        messages:[{role:"user",content:`Invia questa email:\nA: ${to}\nOggetto: ${subject}\nTesto: ${body}`}],
+        max_tokens:300,
+        system:"Invia questa email tramite Gmail. Usa il tool per inviarla. Non aggiungere testo, solo esegui.",
+        messages:[{role:"user",content:`Invia email:\nA: ${to}\nOggetto: ${subject}\nTesto:\n${body}`}],
         mcp_servers:[{type:"url",url:"https://gmail.mcp.claude.com/mcp",name:"gmail"}]
       })
     });
     const data=await res.json();
-    if(data.error)return false;
+    if(data.error){showToast("Errore: "+data.error.message,"err");return false}
     return true;
   }catch(e){
-    // Fallback: prova con OAuth se disponibile
-    if(!GTOK)return false;
-    try{
-      const toHeader=`To: ${to}`;
-      const subjEncoded=`Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-      const mime=[toHeader,subjEncoded,"MIME-Version: 1.0","Content-Type: text/plain; charset=UTF-8","",body].join("\r\n");
-      const encoded=btoa(unescape(encodeURIComponent(mime))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-      const r=await fetch("https://www.googleapis.com/gmail/v1/users/me/messages/send",{
-        method:"POST",
-        headers:{"Authorization":"Bearer "+GTOK,"Content-Type":"application/json"},
-        body:JSON.stringify({raw:encoded})
-      });
-      return r.ok;
-    }catch{return false}
+    showToast("Errore connessione","err");return false;
   }
 }
 
@@ -662,55 +635,42 @@ async function resolveEmail(nameOrEmail){
   return found;
 }
 async function calEvents(){
-  if(!GTOK)return null;
-  try{
-    const now=new Date().toISOString();
-    const end=new Date(Date.now()+14*24*60*60*1000).toISOString();
-    const r=await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&timeMax=${end}&singleEvents=true&orderBy=startTime&maxResults=20`,{headers:{Authorization:"Bearer "+GTOK}});
-    const d=await r.json();return d.items||[];
-  }catch{return null}
-}
-
-async function calCreate(title,dateStr,timeStr,dur=60){
-  // Usa MCP Calendar tramite Anthropic API
   try{
     const res=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
       headers:{"Content-Type":"application/json","x-api-key":KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({
         model:"claude-sonnet-4-20250514",
-        max_tokens:500,
-        system:"Crea l'evento su Google Calendar con i dettagli forniti. Rispondi solo con OK se creato.",
-        messages:[{role:"user",content:`Crea evento:\nTitolo: ${title}\nData: ${dateStr}\nOra: ${timeStr||"09:00"}\nDurata: ${dur} minuti`}],
+        max_tokens:1000,
+        system:"Leggi gli eventi del calendario Google dei prossimi 14 giorni. Restituisci JSON array con {summary, start:{dateTime}, end:{dateTime}}. Solo JSON.",
+        messages:[{role:"user",content:"Leggi eventi prossimi 14 giorni"}],
         mcp_servers:[{type:"url",url:"https://gcal.mcp.claude.com/mcp",name:"gcal"}]
       })
     });
     const data=await res.json();
-    if(data.error)throw new Error(data.error.message);
+    let text="";
+    if(data.content)for(const b of data.content)if(b.type==="text")text+=b.text;
+    try{return JSON.parse(text.replace(/```json|```/g,"").trim())}catch{return[]}
+  }catch{return null}
+}
+
+async function calCreate(title,dateStr,timeStr,dur=60){
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:300,
+        system:"Crea un evento su Google Calendar con i dettagli forniti. Esegui subito senza chiedere conferma.",
+        messages:[{role:"user",content:`Crea evento calendario:\nTitolo: ${title}\nData: ${dateStr}\nOra: ${timeStr||"09:00"}\nDurata: ${dur} minuti\nFuso orario: Europe/Rome`}],
+        mcp_servers:[{type:"url",url:"https://gcal.mcp.claude.com/mcp",name:"gcal"}]
+      })
+    });
+    const data=await res.json();
+    if(data.error){showToast("Errore calendario","err");return false}
     return true;
-  }catch(e){
-    // Fallback OAuth
-    if(!GTOK)return false;
-    try{
-      const mesi={gennaio:"01",febbraio:"02",marzo:"03",aprile:"04",maggio:"05",giugno:"06",luglio:"07",agosto:"08",settembre:"09",ottobre:"10",novembre:"11",dicembre:"12"};
-      let dateNorm=dateStr;
-      const itDate=dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-      if(itDate)dateNorm=`${itDate[3]}-${itDate[2].padStart(2,"0")}-${itDate[1].padStart(2,"0")}`;
-      const verbDate=dateStr.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/i);
-      if(verbDate&&mesi[verbDate[2]?.toLowerCase()])dateNorm=`${verbDate[3]}-${mesi[verbDate[2].toLowerCase()]}-${verbDate[1].padStart(2,"0")}`;
-      const oreMatch=(timeStr||"09:00").match(/(\d{1,2})(?::(\d{2}))?/);
-      const timeNorm=oreMatch?`${oreMatch[1].padStart(2,"0")}:${(oreMatch[2]||"00").padStart(2,"0")}`:"09:00";
-      const start=new Date(`${dateNorm}T${timeNorm}:00`);
-      if(isNaN(start.getTime()))return false;
-      const end=new Date(start.getTime()+dur*60000);
-      const r=await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events",{
-        method:"POST",
-        headers:{Authorization:"Bearer "+GTOK,"Content-Type":"application/json"},
-        body:JSON.stringify({summary:title,start:{dateTime:start.toISOString(),timeZone:"Europe/Rome"},end:{dateTime:end.toISOString(),timeZone:"Europe/Rome"}})
-      });
-      return r.ok;
-    }catch{return false}
-  }
+  }catch{showToast("Errore connessione","err");return false}
 }
 
 async function calFreeSlots(mins=60){
@@ -1042,17 +1002,16 @@ function submitNome(){
 document.getElementById("i-api").addEventListener("input",e=>document.getElementById("b-api").disabled=!e.target.value.trim().startsWith("sk-ant"));
 document.getElementById("b-api").addEventListener("click",()=>{
   const k=document.getElementById("i-api").value.trim();if(!k)return;
-  KEY=k;S.set("key",k);showScreen("s-google");
-});
-
-// Setup Google
-document.getElementById("b-google").addEventListener("click",gAuth);
-document.getElementById("b-skip").addEventListener("click",()=>{
+  KEY=k;S.set("key",k);
   hideScreens();
   document.getElementById("hsub").textContent=`${mem.nome} · Edilizia`;
   document.getElementById("mn-name").textContent=mem.nome;
   if(hist.length===0)addWelcome();else renderAll();
 });
+
+// Google OAuth rimosso — usa MCP Anthropic
+document.getElementById("mi-google")?.addEventListener("click",()=>{closeMenu();showToast("Gmail e Calendar ora funzionano tramite la tua chiave API Anthropic");});
+document.getElementById("b-skip")?.addEventListener("click",()=>{hideScreens();if(hist.length===0)addWelcome();else renderAll()});
 
 // Stop TTS button
 document.getElementById("stop-tts").addEventListener("click",stopTTS);
@@ -1261,17 +1220,13 @@ document.getElementById("pp-geo").addEventListener("click",async()=>{
 
 // ===== INIT =====
 function init(){
-  updateDots();
-  if(GTOK)fetchGEmail();
-  window.addEventListener("load",()=>{if(window.google&&GCID)initGIS()});
-  setTimeout(()=>{if(window.google&&GCID)initGIS()},1500);
-  setTimeout(checkGeoPrem,2000);
   if(!mem.nome){showScreen("s-nome");return}
   if(!KEY){showScreen("s-api");return}
   hideScreens();
-  document.getElementById("hsub").textContent=`${mem.nome} · ${GEMAIL||"Edilizia"}`;
+  document.getElementById("hsub").textContent=`${mem.nome} · Edilizia`;
   document.getElementById("mn-name").textContent=mem.nome;
   renderAll();
+  setTimeout(checkGeoPrem,2000);
 }
 init();
 </script>
