@@ -578,9 +578,11 @@ const MAKE_EMAIL_WEBHOOK="https://hook.eu1.make.com/a6owkbb56d11as541oe6vfhh2otx
 
 async function gmailSend(to,subject,body){
   try{
-    const url=`${MAKE_EMAIL_WEBHOOK}?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    const res=await fetch(url);
-    const text=await res.text();
+    const res=await fetch(MAKE_EMAIL_WEBHOOK,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({to,subject,body})
+    });
     return res.ok;
   }catch(e){
     showToast("Errore invio email","err");
