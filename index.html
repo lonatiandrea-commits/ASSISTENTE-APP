@@ -787,26 +787,22 @@ let pendingEmail=null,pendingCal=null,pendingWA=null;
 
 async function doSendEmail(){
   if(!pendingEmail)return;
-  showToast("Invio in corso...");
   // Risolvi email dal nome se necessario
   let to=pendingEmail.to;
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){
-    showToast("Cerco contatto...");
     const resolved=await resolveEmail(to);
     if(resolved){
       to=resolved;
     } else {
-      const manual=prompt(`Non ho trovato l'email di "${to}". Inseriscila manualmente:`);
-      if(!manual){showToast("Invio annullato","err");pendingEmail=null;return;}
+      const manual=prompt(`Non ho trovato l'email di "${to}".\nInseriscila manualmente:`);
+      if(!manual||!manual.trim()){showToast("Invio annullato","err");pendingEmail=null;return;}
       to=manual.trim();
     }
+    pendingEmail.to=to;
   }
-  const ok=await gmailSend(to, pendingEmail.subject, pendingEmail.body);
-  if(ok){
-    showToast("✅ Email inviata a "+to);
-  } else {
-    showToast("❌ Invio fallito — riconnetti Google dal menu","err");
-  }
+  showToast("Invio in corso...");
+  const ok=await gmailSend(to,pendingEmail.subject,pendingEmail.body);
+  showToast(ok?"✅ Email inviata a "+to:"❌ Invio fallito","ok");
   pendingEmail=null;
 }
 async function doAddCal(){
