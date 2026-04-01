@@ -622,12 +622,16 @@ async function searchContact(name){
   }catch(e){return null}
 }
 
+const MAKE_CONTACT_WEBHOOK="https://hook.eu1.make.com/1q731rn5yu8pc66x1m27nf1j82uf7huf";
+
 async function resolveEmail(nameOrEmail){
-  // Se è già un'email valida, usala direttamente
   if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nameOrEmail))return nameOrEmail;
-  // Altrimenti cerca nei contatti
-  const found=await searchContact(nameOrEmail);
-  return found;
+  try{
+    const res=await fetch(`${MAKE_CONTACT_WEBHOOK}?name=${encodeURIComponent(nameOrEmail)}`);
+    const text=await res.text();
+    if(text&&text.includes("@"))return text.trim();
+  }catch{}
+  return null;
 }
 async function calEvents(){
   try{
